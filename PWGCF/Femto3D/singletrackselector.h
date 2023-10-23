@@ -63,13 +63,11 @@ struct binning {
 };
 } // namespace nsigma
 
-DECLARE_SOA_COLUMN(Mult, mult, int); // Multiplicity of the collision
-DECLARE_SOA_COLUMN(PosZ, posZ, float); // Vertex of the collision
+DECLARE_SOA_COLUMN(Mult, mult, int);           // Multiplicity of the collision
+DECLARE_SOA_COLUMN(PosZ, posZ, float);         // Vertex of the collision
 DECLARE_SOA_COLUMN(MagField, magField, float); // Magnetic field corresponding to a collision (in T)
 
 } // namespace singletrackselector
-
-
 
 DECLARE_SOA_TABLE(SingleCollSels, "AOD", "SCSEL", // Table of the variables for single track selection.
                   o2::soa::Index<>,
@@ -80,20 +78,20 @@ DECLARE_SOA_TABLE(SingleCollSels, "AOD", "SCSEL", // Table of the variables for 
 namespace singletrackselector
 {
 
-DECLARE_SOA_INDEX_COLUMN(SingleCollSel, singleCollSel); // Index to the collision
-DECLARE_SOA_COLUMN(P, p, float);              // Momentum of the track
-DECLARE_SOA_COLUMN(Pt, pt, float);              // Momentum of the track
-DECLARE_SOA_COLUMN(DcaXY, dcaXY, float);               // impact parameter of the track
-DECLARE_SOA_COLUMN(DcaZ, dcaZ, float);                 // impact parameter of the track
-DECLARE_SOA_COLUMN(TPCInnerParam, tpcInnerParam, float); // Momentum at inner wall of the TPC
-DECLARE_SOA_COLUMN(TPCSignal, tpcSignal, float); // dE/dx TPC
-DECLARE_SOA_COLUMN(Beta, beta, float); // TOF beta
-DECLARE_SOA_COLUMN(TPCNClsFound, tpcNClsFound, int16_t); // Number of TPC clusters
-DECLARE_SOA_COLUMN(TPCChi2NCl, tpcChi2NCl, float);     // TPC chi2
+DECLARE_SOA_INDEX_COLUMN(SingleCollSel, singleCollSel);                                  // Index to the collision
+DECLARE_SOA_COLUMN(P, p, float);                                                         // Momentum of the track
+DECLARE_SOA_COLUMN(Pt, pt, float);                                                       // Momentum of the track
+DECLARE_SOA_COLUMN(DcaXY, dcaXY, float);                                                 // impact parameter of the track
+DECLARE_SOA_COLUMN(DcaZ, dcaZ, float);                                                   // impact parameter of the track
+DECLARE_SOA_COLUMN(TPCInnerParam, tpcInnerParam, float);                                 // Momentum at inner wall of the TPC
+DECLARE_SOA_COLUMN(TPCSignal, tpcSignal, float);                                         // dE/dx TPC
+DECLARE_SOA_COLUMN(Beta, beta, float);                                                   // TOF beta
+DECLARE_SOA_COLUMN(TPCNClsFound, tpcNClsFound, int16_t);                                 // Number of TPC clusters
+DECLARE_SOA_COLUMN(TPCChi2NCl, tpcChi2NCl, float);                                       // TPC chi2
 DECLARE_SOA_COLUMN(TPCCrossedRowsOverFindableCls, tpcCrossedRowsOverFindableCls, float); // Ratio of found over findable clusters
-DECLARE_SOA_COLUMN(TPCNClsShared, tpcNClsShared, uint8_t); // Number of shared TPC clusters
-DECLARE_SOA_COLUMN(ITSNCls, itsNCls, uint8_t);           // Number of ITS clusters
-DECLARE_SOA_COLUMN(ITSChi2NCl, itsChi2NCl, float);     // ITS chi2
+DECLARE_SOA_COLUMN(TPCNClsShared, tpcNClsShared, uint8_t);                               // Number of shared TPC clusters
+DECLARE_SOA_COLUMN(ITSNCls, itsNCls, uint8_t);                                           // Number of ITS clusters
+DECLARE_SOA_COLUMN(ITSChi2NCl, itsChi2NCl, float);                                       // ITS chi2
 DECLARE_SOA_COLUMN(Sign, sign, int8_t);
 DECLARE_SOA_COLUMN(Eta, eta, float);
 DECLARE_SOA_COLUMN(Phi, phi, float);
@@ -103,13 +101,13 @@ DECLARE_SOA_COLUMN(StoredTOFNSigmaDe, storedTofNSigmaDe, nsigma::binning::binned
 DECLARE_SOA_COLUMN(StoredTPCNSigmaDe, storedTpcNSigmaDe, nsigma::binning::binned_t);
 
 DECLARE_SOA_DYNAMIC_COLUMN(Energy, energy,
-                           [](float p, float mass) -> float { return sqrt(p*p + mass * mass); });
+                           [](float p, float mass) -> float { return sqrt(p * p + mass * mass); });
 DECLARE_SOA_DYNAMIC_COLUMN(Px, px,
-                           [](float pt, float phi) -> float { return pt*std::sin(phi); });
+                           [](float pt, float phi) -> float { return pt * std::sin(phi); });
 DECLARE_SOA_DYNAMIC_COLUMN(Py, py,
-                           [](float pt, float phi) -> float { return pt*std::cos(phi); });
+                           [](float pt, float phi) -> float { return pt * std::cos(phi); });
 DECLARE_SOA_DYNAMIC_COLUMN(Pz, pz,
-                           [](float p, float pt, float eta) -> float { return eta > 0 ? sqrt(p*p - pt*pt) : (-1)*sqrt(p*p - pt*pt); });
+                           [](float p, float pt, float eta) -> float { return eta > 0 ? sqrt(p * p - pt * pt) : (-1) * sqrt(p * p - pt * pt); });
 
 DECLARE_SOA_DYNAMIC_COLUMN(TOFNSigmaPr, tofNSigmaPr,
                            [](nsigma::binning::binned_t nsigma_binned) -> float { return singletrackselector::unPack<nsigma::binning>(nsigma_binned); });
@@ -123,68 +121,80 @@ DECLARE_SOA_DYNAMIC_COLUMN(TPCNSigmaDe, tpcNSigmaDe,
 } // namespace singletrackselector
 
 DECLARE_SOA_TABLE_FULL(SingleTrackSel, "SelTracks", "AOD", "STSEL", // Table of the variables for single track selection.
-                  o2::soa::Index<>,
-                  singletrackselector::SingleCollSelId,
-                  singletrackselector::P,
-                  singletrackselector::Pt,
-                  singletrackselector::DcaXY,
-                  singletrackselector::DcaZ,
-                  singletrackselector::TPCInnerParam,
-                  singletrackselector::TPCSignal,
-                  singletrackselector::Beta,
-                  singletrackselector::TPCNClsFound,
-                  singletrackselector::TPCChi2NCl,
-                  singletrackselector::TPCCrossedRowsOverFindableCls,
-                  singletrackselector::TPCNClsShared,
-                  singletrackselector::ITSNCls,
-                  singletrackselector::ITSChi2NCl,
-                  singletrackselector::Sign,
-                  singletrackselector::Eta,
-                  singletrackselector::Phi,
-                  singletrackselector::StoredTOFNSigmaPr,
-                  singletrackselector::StoredTPCNSigmaPr,
-                  singletrackselector::StoredTOFNSigmaDe,
-                  singletrackselector::StoredTPCNSigmaDe,
-                  singletrackselector::Energy<singletrackselector::P>,
-                  singletrackselector::Px<singletrackselector::Pt, singletrackselector::Phi>,
-                  singletrackselector::Py<singletrackselector::Pt, singletrackselector::Phi>,
-                  singletrackselector::Pz<singletrackselector::P, singletrackselector::Pt, singletrackselector::Eta>,
-                  singletrackselector::TOFNSigmaPr<singletrackselector::StoredTOFNSigmaPr>,
-                  singletrackselector::TPCNSigmaPr<singletrackselector::StoredTPCNSigmaPr>,
-                  singletrackselector::TOFNSigmaDe<singletrackselector::StoredTOFNSigmaDe>,
-                  singletrackselector::TPCNSigmaDe<singletrackselector::StoredTPCNSigmaDe>);
+                       o2::soa::Index<>,
+                       singletrackselector::SingleCollSelId,
+                       singletrackselector::P,
+                       singletrackselector::Pt,
+                       singletrackselector::DcaXY,
+                       singletrackselector::DcaZ,
+                       singletrackselector::TPCInnerParam,
+                       singletrackselector::TPCSignal,
+                       singletrackselector::Beta,
+                       singletrackselector::TPCNClsFound,
+                       singletrackselector::TPCChi2NCl,
+                       singletrackselector::TPCCrossedRowsOverFindableCls,
+                       singletrackselector::TPCNClsShared,
+                       singletrackselector::ITSNCls,
+                       singletrackselector::ITSChi2NCl,
+                       singletrackselector::Sign,
+                       singletrackselector::Eta,
+                       singletrackselector::Phi,
+                       singletrackselector::StoredTOFNSigmaPr,
+                       singletrackselector::StoredTPCNSigmaPr,
+                       singletrackselector::StoredTOFNSigmaDe,
+                       singletrackselector::StoredTPCNSigmaDe,
+                       singletrackselector::Energy<singletrackselector::P>,
+                       singletrackselector::Px<singletrackselector::Pt, singletrackselector::Phi>,
+                       singletrackselector::Py<singletrackselector::Pt, singletrackselector::Phi>,
+                       singletrackselector::Pz<singletrackselector::P, singletrackselector::Pt, singletrackselector::Eta>,
+                       singletrackselector::TOFNSigmaPr<singletrackselector::StoredTOFNSigmaPr>,
+                       singletrackselector::TPCNSigmaPr<singletrackselector::StoredTPCNSigmaPr>,
+                       singletrackselector::TOFNSigmaDe<singletrackselector::StoredTOFNSigmaDe>,
+                       singletrackselector::TPCNSigmaDe<singletrackselector::StoredTPCNSigmaDe>);
 
 } // namespace o2::aod
 #endif // PWGCF_DATAMODEL_SINGLETRACKSELECTOR_H_
 
-
-template <typename TrackType> inline bool TPCselection(TrackType const& track, std::pair<int, std::vector<float>> const& PIDcuts){
+template <typename TrackType>
+inline bool TPCselection(TrackType const& track, std::pair<int, std::vector<float>> const& PIDcuts)
+{
   // add check for the size of the vector and order of the values??? must be 2 valies in order => [down, up]
 
   float Nsigma = -1000;
 
-  if(PIDcuts.first == 2212) Nsigma = track.tpcNSigmaPr();
-  if(PIDcuts.first == 1000010020) Nsigma = track.tpcNSigmaDe();
+  if (PIDcuts.first == 2212)
+    Nsigma = track.tpcNSigmaPr();
+  if (PIDcuts.first == 1000010020)
+    Nsigma = track.tpcNSigmaDe();
 
-  if(Nsigma > PIDcuts.second[0] && Nsigma < PIDcuts.second[1]) return true;
-  else return false;
+  if (Nsigma > PIDcuts.second[0] && Nsigma < PIDcuts.second[1])
+    return true;
+  else
+    return false;
 }
 
-template <typename TrackType> inline bool TOFselection(TrackType const& track, std::pair<int, std::vector<float>> const& PIDcuts){
+template <typename TrackType>
+inline bool TOFselection(TrackType const& track, std::pair<int, std::vector<float>> const& PIDcuts)
+{
   // add check for the size of the vector and order of the values??? must be 2 valies in order => [down, up]
 
   float Nsigma = -1000;
 
-  if(PIDcuts.first == 2212) Nsigma = track.tofNSigmaPr();
-  else if(PIDcuts.first == 1000010020) Nsigma = track.tofNSigmaDe();
+  if (PIDcuts.first == 2212)
+    Nsigma = track.tofNSigmaPr();
+  else if (PIDcuts.first == 1000010020)
+    Nsigma = track.tofNSigmaDe();
 
-  else if(PIDcuts.first == 211){
-    if constexpr (std::experimental::is_detected<o2::aod::pidutils::hasTOFPi, TrackType>::value) Nsigma = track.tofNSigmaPi();
-  }
-  else if(PIDcuts.first == 321){
-    if constexpr (std::experimental::is_detected<o2::aod::pidutils::hasTOFKa, TrackType>::value) Nsigma = track.tofNSigmaKa();
+  else if (PIDcuts.first == 211) {
+    if constexpr (std::experimental::is_detected<o2::aod::pidutils::hasTOFPi, TrackType>::value)
+      Nsigma = track.tofNSigmaPi();
+  } else if (PIDcuts.first == 321) {
+    if constexpr (std::experimental::is_detected<o2::aod::pidutils::hasTOFKa, TrackType>::value)
+      Nsigma = track.tofNSigmaKa();
   }
 
-  if(Nsigma > PIDcuts.second[0] && Nsigma < PIDcuts.second[1]) return true;
-  else return false;
+  if (Nsigma > PIDcuts.second[0] && Nsigma < PIDcuts.second[1])
+    return true;
+  else
+    return false;
 }
