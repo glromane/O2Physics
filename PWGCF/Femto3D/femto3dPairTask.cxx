@@ -89,13 +89,13 @@ struct FemtoCorrelations {
   Configurable<int> _multbinwidth{"multbinwidth", 50, "width of multiplicity bins within which the mixing is done"};
   Configurable<int> _vertexbinwidth{"vertexbinwidth", 2, "width of vertexZ bins within which the mixing is done"};
 
-  bool IsIdentical = (_sign_1 * _particlePDG_1 == _sign_2 * _particlePDG_2);
+  bool IsIdentical;
 
-  std::pair<int, std::vector<float>> TPCcuts_1 = std::make_pair(_particlePDG_1, _tpcNSigma_1);
-  std::pair<int, std::vector<float>> TOFcuts_1 = std::make_pair(_particlePDG_1, _tofNSigma_1);
+  std::pair<int, std::vector<float>> TPCcuts_1;
+  std::pair<int, std::vector<float>> TOFcuts_1;
 
-  std::pair<int, std::vector<float>> TPCcuts_2 = std::make_pair(_particlePDG_2, _tpcNSigma_2);
-  std::pair<int, std::vector<float>> TOFcuts_2 = std::make_pair(_particlePDG_2, _tofNSigma_2);
+  std::pair<int, std::vector<float>> TPCcuts_2;
+  std::pair<int, std::vector<float>> TOFcuts_2;
 
   std::map<int64_t, std::vector<FemtoParticle*>> selectedtracks_1;
   std::map<int64_t, std::vector<FemtoParticle*>> selectedtracks_2;
@@ -119,6 +119,13 @@ struct FemtoCorrelations {
 
   void init(o2::framework::InitContext&)
   {
+    IsIdentical = (_sign_1 * _particlePDG_1 == _sign_2 * _particlePDG_2);
+
+    TPCcuts_1 = std::make_pair(_particlePDG_1, _tpcNSigma_1);
+    TOFcuts_1 = std::make_pair(_particlePDG_1, _tofNSigma_1);
+    TPCcuts_2 = std::make_pair(_particlePDG_2, _tpcNSigma_2);
+    TOFcuts_2 = std::make_pair(_particlePDG_2, _tofNSigma_2);
+    
     registry.add("SE", "SE", kTH1F, {{500, 0.005, 5.005, "k*"}});
     registry.add("ME", "ME", kTH1F, {{500, 0.005, 5.005, "k*"}});
     registry.add("p_first", "p", kTH1F, {{100, 0., 5., "p"}});
