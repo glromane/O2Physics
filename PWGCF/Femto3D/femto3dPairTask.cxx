@@ -125,7 +125,7 @@ struct FemtoCorrelations {
     TOFcuts_1 = std::make_pair(_particlePDG_1, _tofNSigma_1);
     TPCcuts_2 = std::make_pair(_particlePDG_2, _tpcNSigma_2);
     TOFcuts_2 = std::make_pair(_particlePDG_2, _tofNSigma_2);
-    
+
     registry.add("SE", "SE", kTH1F, {{500, 0.005, 5.005, "k*"}});
     registry.add("ME", "ME", kTH1F, {{500, 0.005, 5.005, "k*"}});
     registry.add("p_first", "p", kTH1F, {{100, 0., 5., "p"}});
