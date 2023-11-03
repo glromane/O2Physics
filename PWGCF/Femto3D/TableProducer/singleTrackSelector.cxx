@@ -78,7 +78,8 @@ struct singleTrackSelector {
   std::vector<int> particlesToKeep;
   std::vector<int> particlesToReject;
 
-  void init(InitContext& context){
+  void init(InitContext& context)
+  {
 
     particlesToKeep = _particlesToKeep;
     particlesToReject = _particlesToReject;
@@ -89,7 +90,7 @@ struct singleTrackSelector {
     ccdb->setFatalWhenNull(false);
   }
 
-  void initCCDB(aod::BCsWithTimestamps::iterator const& bc) //inspired by PWGLF/TableProducer/lambdakzerobuilder.cxx
+  void initCCDB(aod::BCsWithTimestamps::iterator const& bc) // inspired by PWGLF/TableProducer/lambdakzerobuilder.cxx
   {
     if (mRunNumber == bc.runNumber()) {
       return;
@@ -115,7 +116,7 @@ struct singleTrackSelector {
       LOG(info) << "Retrieved GRP for timestamp " << run3grp_timestamp << " with magnetic field of " << d_bz << " kZG";
     }
     mRunNumber = bc.runNumber();
-    d_bz = 0.1*d_bz;
+    d_bz = 0.1 * d_bz;
   }
 
   void process(soa::Filtered<Coll>::iterator const& collision, soa::Filtered<Trks> const& tracks, aod::BCsWithTimestamps const&)
@@ -123,7 +124,7 @@ struct singleTrackSelector {
 
     tableRow.reserve(tracks.size());
 
-    //auto collision = collisions.begin();
+    // auto collision = collisions.begin();
     auto bc = collision.bc_as<aod::BCsWithTimestamps>();
     initCCDB(bc);
 
@@ -133,41 +134,42 @@ struct singleTrackSelector {
 
     for (auto& track : tracks) {
 
-      for(auto i : particlesToReject){
+      for (auto i : particlesToReject) {
         // if satisfied, want to continue in the upper loop (over tracks) -- skip the current track
-        //cannot use simple 'continue' since it will be applied to the current loop, so have to use 'goto'
-        if( TOFselection(track, std::make_pair(i, rejectWithinNsigmaTOF)) ){
+        // cannot use simple 'continue' since it will be applied to the current loop, so have to use 'goto'
+        if (TOFselection(track, std::make_pair(i, rejectWithinNsigmaTOF))) {
           goto skip;
         }
       }
 
-      for(auto ii : particlesToKeep) if( TPCselection(track, std::make_pair(ii, keepWithinNsigmaTPC)) ){
+      for (auto ii : particlesToKeep)
+        if (TPCselection(track, std::make_pair(ii, keepWithinNsigmaTPC))) {
 
-        tableRow(tableRowColl.lastIndex(),
-                 track.p(),
-                 track.dcaXY(),
-                 track.dcaZ(),
-                 track.tpcInnerParam(),
-                 track.tpcSignal(),
-                 track.beta(),
-                 track.tpcNClsFound(),
-                 track.tpcChi2NCl(),
-                 track.tpcCrossedRowsOverFindableCls(),
-                 track.tpcNClsShared(),
-                 track.itsNCls(),
-                 track.itsChi2NCl(),
-                 track.sign(),
-                 track.eta(),
-                 track.phi(),
-                 singletrackselector::packInTable<singletrackselector::nsigma::binning>(track.tofNSigmaPr()),
-                 singletrackselector::packInTable<singletrackselector::nsigma::binning>(track.tpcNSigmaPr()),
-                 singletrackselector::packInTable<singletrackselector::nsigma::binning>(track.tofNSigmaDe()),
-                 singletrackselector::packInTable<singletrackselector::nsigma::binning>(track.tpcNSigmaDe()));
+          tableRow(tableRowColl.lastIndex(),
+                   track.p(),
+                   track.dcaXY(),
+                   track.dcaZ(),
+                   track.tpcInnerParam(),
+                   track.tpcSignal(),
+                   track.beta(),
+                   track.tpcNClsFound(),
+                   track.tpcChi2NCl(),
+                   track.tpcCrossedRowsOverFindableCls(),
+                   track.tpcNClsShared(),
+                   track.itsNCls(),
+                   track.itsChi2NCl(),
+                   track.sign(),
+                   track.eta(),
+                   track.phi(),
+                   singletrackselector::packInTable<singletrackselector::nsigma::binning>(track.tofNSigmaPr()),
+                   singletrackselector::packInTable<singletrackselector::nsigma::binning>(track.tpcNSigmaPr()),
+                   singletrackselector::packInTable<singletrackselector::nsigma::binning>(track.tofNSigmaDe()),
+                   singletrackselector::packInTable<singletrackselector::nsigma::binning>(track.tpcNSigmaDe()));
 
-        break; // break the loop with particlesToKeep after the 'if' condition is satisfied -- don't want double entries
-      }
+          break; // break the loop with particlesToKeep after the 'if' condition is satisfied -- don't want double entries
+        }
 
-      skip:; // here we send with 'goto'
+    skip:; // here we send with 'goto'
     }
   }
 };
