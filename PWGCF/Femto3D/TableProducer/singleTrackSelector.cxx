@@ -30,7 +30,7 @@
 #include "DataFormatsParameters/GRPMagField.h"
 #include "CCDB/BasicCCDBManager.h"
 
-#include "singletrackselector.h"
+#include "PWGCF/Femto3D/DataModel/singletrackselector.h"
 
 //#include "TDatabasePDG.h"
 
@@ -145,7 +145,6 @@ struct singleTrackSelector {
 
         tableRow(tableRowColl.lastIndex(),
                  track.p(),
-                 track.pt(),
                  track.dcaXY(),
                  track.dcaZ(),
                  track.tpcInnerParam(),

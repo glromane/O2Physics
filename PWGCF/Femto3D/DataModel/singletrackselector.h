@@ -82,7 +82,6 @@ namespace singletrackselector
 
 DECLARE_SOA_INDEX_COLUMN(SingleCollSel, singleCollSel); // Index to the collision
 DECLARE_SOA_COLUMN(P, p, float);              // Momentum of the track
-DECLARE_SOA_COLUMN(Pt, pt, float);              // Momentum of the track
 DECLARE_SOA_COLUMN(DcaXY, dcaXY, float);               // impact parameter of the track
 DECLARE_SOA_COLUMN(DcaZ, dcaZ, float);                 // impact parameter of the track
 DECLARE_SOA_COLUMN(TPCInnerParam, tpcInnerParam, float); // Momentum at inner wall of the TPC
@@ -104,12 +103,14 @@ DECLARE_SOA_COLUMN(StoredTPCNSigmaDe, storedTpcNSigmaDe, nsigma::binning::binned
 
 DECLARE_SOA_DYNAMIC_COLUMN(Energy, energy,
                            [](float p, float mass) -> float { return sqrt(p*p + mass * mass); });
+DECLARE_SOA_DYNAMIC_COLUMN(Pt, pt,
+                           [](float p, float eta) -> float { return p/std::cosh(eta); });
 DECLARE_SOA_DYNAMIC_COLUMN(Px, px,
-                           [](float pt, float phi) -> float { return pt*std::sin(phi); });
+                           [](float p, float eta, float phi) -> float { return (p/std::cosh(eta))*std::sin(phi); });
 DECLARE_SOA_DYNAMIC_COLUMN(Py, py,
-                           [](float pt, float phi) -> float { return pt*std::cos(phi); });
+                           [](float p, float eta, float phi) -> float { return (p/std::cosh(eta))*std::cos(phi); });
 DECLARE_SOA_DYNAMIC_COLUMN(Pz, pz,
-                           [](float p, float pt, float eta) -> float { return eta > 0 ? sqrt(p*p - pt*pt) : (-1)*sqrt(p*p - pt*pt); });
+                           [](float p, float eta) -> float { return p*std::tanh(eta); });
 
 DECLARE_SOA_DYNAMIC_COLUMN(TOFNSigmaPr, tofNSigmaPr,
                            [](nsigma::binning::binned_t nsigma_binned) -> float { return singletrackselector::unPack<nsigma::binning>(nsigma_binned); });
@@ -126,7 +127,6 @@ DECLARE_SOA_TABLE_FULL(SingleTrackSel, "SelTracks", "AOD", "STSEL", // Table of 
                   o2::soa::Index<>,
                   singletrackselector::SingleCollSelId,
                   singletrackselector::P,
-                  singletrackselector::Pt,
                   singletrackselector::DcaXY,
                   singletrackselector::DcaZ,
                   singletrackselector::TPCInnerParam,
@@ -146,9 +146,10 @@ DECLARE_SOA_TABLE_FULL(SingleTrackSel, "SelTracks", "AOD", "STSEL", // Table of 
                   singletrackselector::StoredTOFNSigmaDe,
                   singletrackselector::StoredTPCNSigmaDe,
                   singletrackselector::Energy<singletrackselector::P>,
-                  singletrackselector::Px<singletrackselector::Pt, singletrackselector::Phi>,
-                  singletrackselector::Py<singletrackselector::Pt, singletrackselector::Phi>,
-                  singletrackselector::Pz<singletrackselector::P, singletrackselector::Pt, singletrackselector::Eta>,
+                  singletrackselector::Pt<singletrackselector::P, singletrackselector::Eta>,
+                  singletrackselector::Px<singletrackselector::P, singletrackselector::Eta, singletrackselector::Phi>,
+                  singletrackselector::Py<singletrackselector::P, singletrackselector::Eta, singletrackselector::Phi>,
+                  singletrackselector::Pz<singletrackselector::P, singletrackselector::Eta>,
                   singletrackselector::TOFNSigmaPr<singletrackselector::StoredTOFNSigmaPr>,
                   singletrackselector::TPCNSigmaPr<singletrackselector::StoredTPCNSigmaPr>,
                   singletrackselector::TOFNSigmaDe<singletrackselector::StoredTOFNSigmaDe>,

@@ -27,7 +27,7 @@
 #include "Framework/Expressions.h"
 
 #include "Framework/StaticFor.h"
-#include "singletrackselector.h"
+#include "PWGCF/Femto3D/DataModel/singletrackselector.h"
 #include "TDatabasePDG.h"
 
 using namespace o2;

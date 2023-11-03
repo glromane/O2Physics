@@ -27,12 +27,12 @@
 #include "Framework/Expressions.h"
 
 #include "Framework/StaticFor.h"
-#include "singletrackselector.h"
+#include "PWGCF/Femto3D/DataModel/singletrackselector.h"
 
 #include <vector>
 #include "TLorentzVector.h"
 #include "TDatabasePDG.h"
-#include "femto3dPairTask.h"
+#include "PWGCF/Femto3D/Core/femto3dPairTask.h"
 
 using namespace o2;
 using namespace o2::soa;
@@ -87,13 +87,13 @@ struct FemtoCorrelations {
   Configurable<int> _multbinwidth{"multbinwidth", 50, "width of multiplicity bins within which the mixing is done"};
   Configurable<int> _vertexbinwidth{"vertexbinwidth", 2, "width of vertexZ bins within which the mixing is done"};
 
-  bool IsIdentical = (_sign_1*_particlePDG_1 == _sign_2*_particlePDG_2);
+  bool IsIdentical;
 
-  std::pair<int, std::vector<float>> TPCcuts_1 = std::make_pair(_particlePDG_1, _tpcNSigma_1);
-  std::pair<int, std::vector<float>> TOFcuts_1 = std::make_pair(_particlePDG_1, _tofNSigma_1);
+  std::pair<int, std::vector<float>> TPCcuts_1;
+  std::pair<int, std::vector<float>> TOFcuts_1;
 
-  std::pair<int, std::vector<float>> TPCcuts_2 = std::make_pair(_particlePDG_2, _tpcNSigma_2);
-  std::pair<int, std::vector<float>> TOFcuts_2 = std::make_pair(_particlePDG_2, _tofNSigma_2);
+  std::pair<int, std::vector<float>> TPCcuts_2;
+  std::pair<int, std::vector<float>> TOFcuts_2;
 
   std::map<int64_t, std::vector<FemtoParticle*>> selectedtracks_1;
   std::map<int64_t, std::vector<FemtoParticle*>> selectedtracks_2;
@@ -121,6 +121,13 @@ struct FemtoCorrelations {
 
   void init(o2::framework::InitContext&)
   {
+    IsIdentical = (_sign_1*_particlePDG_1 == _sign_2*_particlePDG_2);
+
+    TPCcuts_1 = std::make_pair(_particlePDG_1, _tpcNSigma_1);
+    TOFcuts_1 = std::make_pair(_particlePDG_1, _tofNSigma_1);
+    TPCcuts_2 = std::make_pair(_particlePDG_2, _tpcNSigma_2);
+    TOFcuts_2 = std::make_pair(_particlePDG_2, _tofNSigma_2);
+    
     registry.add("SE", "SE", kTH1F, {{500, 0.005, 5.005, "k*"}});
     registry.add("ME", "ME", kTH1F, {{500, 0.005, 5.005, "k*"}});
     registry.add("p_first", "p", kTH1F, {{100, 0., 5., "p"}});
@@ -136,6 +143,7 @@ struct FemtoCorrelations {
 
   void process(soa::Filtered<FilteredCollisions> const& collisions, soa::Filtered<FilteredTracks> const& tracks)
   {
+    int selected_ev_counter=0;
 
     if(_particlePDG_1 == 0 || _particlePDG_2 == 0) LOGF(fatal, "One of passed PDG is 0!!!");
 
@@ -270,8 +278,13 @@ struct FemtoCorrelations {
     }
     selectedtracks_2.clear();
 
-    for(auto i = mixbins.begin(); i != mixbins.end(); i++) (i->second).clear();
+    for(auto i = mixbins.begin(); i != mixbins.end(); i++){
+      selected_ev_counter+=(i->second).size();
+      (i->second).clear();
+    }
     mixbins.clear();
+
+    LOG(info) <<"Events with p || d = " << selected_ev_counter;
   }
 };
 
