@@ -111,6 +111,10 @@ DECLARE_SOA_DYNAMIC_COLUMN(Py, py,
                            [](float p, float eta, float phi) -> float { return (p/std::cosh(eta))*std::cos(phi); });
 DECLARE_SOA_DYNAMIC_COLUMN(Pz, pz,
                            [](float p, float eta) -> float { return p*std::tanh(eta); });
+DECLARE_SOA_DYNAMIC_COLUMN(PhiStar, phiStar,
+                           [](float p, float eta, float sign, float phi, float magfield=0.0, float radius=1.6) -> float {
+                            if(magfield==0.0) return -1000.0;
+                            else return phi + std::asin( -0.3*magfield*sign*radius/(2.0*p/std::cosh(eta)) );});
 
 DECLARE_SOA_DYNAMIC_COLUMN(TOFNSigmaPr, tofNSigmaPr,
                            [](nsigma::binning::binned_t nsigma_binned) -> float { return singletrackselector::unPack<nsigma::binning>(nsigma_binned); });
@@ -123,7 +127,7 @@ DECLARE_SOA_DYNAMIC_COLUMN(TPCNSigmaDe, tpcNSigmaDe,
 
 } // namespace singletrackselector
 
-DECLARE_SOA_TABLE_FULL(SingleTrackSel, "SelTracks", "AOD", "STSEL", // Table of the variables for single track selection.
+DECLARE_SOA_TABLE_FULL(SingleTrackSels, "SelTracks", "AOD", "STSEL", // Table of the variables for single track selection.
                   o2::soa::Index<>,
                   singletrackselector::SingleCollSelId,
                   singletrackselector::P,
@@ -150,6 +154,7 @@ DECLARE_SOA_TABLE_FULL(SingleTrackSel, "SelTracks", "AOD", "STSEL", // Table of 
                   singletrackselector::Px<singletrackselector::P, singletrackselector::Eta, singletrackselector::Phi>,
                   singletrackselector::Py<singletrackselector::P, singletrackselector::Eta, singletrackselector::Phi>,
                   singletrackselector::Pz<singletrackselector::P, singletrackselector::Eta>,
+                  singletrackselector::PhiStar<singletrackselector::P, singletrackselector::Eta, singletrackselector::Sign, singletrackselector::Phi>,
                   singletrackselector::TOFNSigmaPr<singletrackselector::StoredTOFNSigmaPr>,
                   singletrackselector::TPCNSigmaPr<singletrackselector::StoredTPCNSigmaPr>,
                   singletrackselector::TOFNSigmaDe<singletrackselector::StoredTOFNSigmaDe>,
@@ -158,6 +163,8 @@ DECLARE_SOA_TABLE_FULL(SingleTrackSel, "SelTracks", "AOD", "STSEL", // Table of 
 } // namespace o2::aod
 #endif // PWGCF_DATAMODEL_SINGLETRACKSELECTOR_H_
 
+namespace o2::aod::singletrackselector
+{
 
 template <typename TrackType> inline bool TPCselection(TrackType const& track, std::pair<int, std::vector<float>> const& PIDcuts){
   // add check for the size of the vector and order of the values??? must be 2 valies in order => [down, up]
@@ -189,3 +196,4 @@ template <typename TrackType> inline bool TOFselection(TrackType const& track, s
   if(Nsigma > PIDcuts.second[0] && Nsigma < PIDcuts.second[1]) return true;
   else return false;
 }
+} // namespace singletrackselector

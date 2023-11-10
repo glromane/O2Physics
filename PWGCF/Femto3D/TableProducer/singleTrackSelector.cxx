@@ -63,7 +63,7 @@ struct singleTrackSelector {
                          aod::TrackSelection, aod::pidTOFbeta>;
   using Coll = soa::Join<aod::Collisions, aod::Mults, aod::EvSels, aod::FT0sCorrected>;
 
-  Produces<o2::aod::SingleTrackSel> tableRow;
+  Produces<o2::aod::SingleTrackSels> tableRow;
   Produces<o2::aod::SingleCollSels> tableRowColl;
 
   Filter eventFilter = (applyEvSel.node() == 0) ||
@@ -121,9 +121,10 @@ struct singleTrackSelector {
   void process(soa::Filtered<Coll>::iterator const& collision, soa::Filtered<Trks> const& tracks, aod::BCsWithTimestamps const&)
   {
 
+    bool skip_track = false; // flag used for track rejection
+
     tableRow.reserve(tracks.size());
 
-    //auto collision = collisions.begin();
     auto bc = collision.bc_as<aod::BCsWithTimestamps>();
     initCCDB(bc);
 
@@ -132,16 +133,20 @@ struct singleTrackSelector {
                  d_bz);
 
     for (auto& track : tracks) {
+      skip_track = false;
 
       for(auto i : particlesToReject){
         // if satisfied, want to continue in the upper loop (over tracks) -- skip the current track
-        //cannot use simple 'continue' since it will be applied to the current loop, so have to use 'goto'
-        if( TOFselection(track, std::make_pair(i, rejectWithinNsigmaTOF)) ){
-          goto skip;
+        //cannot use simple 'continue' since it will be applied to the current loop, so have to use a flag
+        if( o2::aod::singletrackselector::TOFselection(track, std::make_pair(i, rejectWithinNsigmaTOF)) ){
+          skip_track = true;
+          break;
         }
       }
 
-      for(auto ii : particlesToKeep) if( TPCselection(track, std::make_pair(ii, keepWithinNsigmaTPC)) ){
+      if(skip_track) continue;
+
+      for(auto ii : particlesToKeep) if( o2::aod::singletrackselector::TPCselection(track, std::make_pair(ii, keepWithinNsigmaTPC)) ){
 
         tableRow(tableRowColl.lastIndex(),
                  track.p(),
@@ -166,8 +171,6 @@ struct singleTrackSelector {
 
         break; // break the loop with particlesToKeep after the 'if' condition is satisfied -- don't want double entries
       }
-
-      skip:; // here we send with 'goto'
     }
   }
 };

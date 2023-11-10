@@ -36,13 +36,6 @@ using namespace o2::aod;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 
-double particle_mass(int PDGcode){
-  //if(PDGcode == 2212) return TDatabasePDG::Instance()->GetParticle(2212)->Mass();
-  if(PDGcode == 1000010020) return 1.87561294257;
-  else return TDatabasePDG::Instance()->GetParticle(PDGcode)->Mass();
-}
-
-
 struct QAHistograms {
   //using allinfo = soa::Join<aod::Tracks, aod::TracksExtra, aod::TrackSelection, aod::pidTPCFullPr, aod::TOFSignal, aod::TracksDCA, aod::pidTOFFullPr, aod::pidTOFbeta, aod::pidTOFFullKa, aod::pidTPCFullKa, aod::pidTOFFullDe, aod::pidTPCFullDe>; // aod::pidTPCPr
   /// Construct a registry object with direct declaration
@@ -75,7 +68,7 @@ struct QAHistograms {
   std::pair<int, std::vector<float>> TOFcuts = std::make_pair(_particlePDG, _tofNSigma);
 
   using FilteredCollisions = aod::SingleCollSels;
-  using FilteredTracks = aod::SingleTrackSel;
+  using FilteredTracks = aod::SingleTrackSels;
 
 
   Filter signFilter = o2::aod::singletrackselector::sign == _sign;
@@ -141,7 +134,7 @@ struct QAHistograms {
         registry.fill(HIST("TPCSignal_nocuts"), track.tpcInnerParam(), track.tpcSignal());
         registry.fill(HIST("TOFSignal_nocuts"), track.p(), track.beta());
 
-        if( !TOFselection(track, std::make_pair(_particlePDGtoReject, _rejectWithinNsigmaTOF)) && (track.p() < _PIDtrshld ? TPCselection(track, TPCcuts) : TOFselection(track, TOFcuts)) ){
+        if( !TOFselection(track, std::make_pair(_particlePDGtoReject, _rejectWithinNsigmaTOF)) && (track.p() < _PIDtrshld ? o2::aod::singletrackselector::TPCselection(track, TPCcuts) : o2::aod::singletrackselector::TOFselection(track, TOFcuts)) ){
           registry.fill(HIST("eta"), track.eta());
           registry.fill(HIST("phi"), track.phi());
           registry.fill(HIST("px"), track.px());
