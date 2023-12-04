@@ -37,7 +37,7 @@ using namespace o2::framework;
 using namespace o2::framework::expressions;
 
 struct QAHistograms {
-  //using allinfo = soa::Join<aod::Tracks, aod::TracksExtra, aod::TrackSelection, aod::pidTPCFullPr, aod::TOFSignal, aod::TracksDCA, aod::pidTOFFullPr, aod::pidTOFbeta, aod::pidTOFFullKa, aod::pidTPCFullKa, aod::pidTOFFullDe, aod::pidTPCFullDe>; // aod::pidTPCPr
+  // using allinfo = soa::Join<aod::Tracks, aod::TracksExtra, aod::TrackSelection, aod::pidTPCFullPr, aod::TOFSignal, aod::TracksDCA, aod::pidTOFFullPr, aod::pidTOFbeta, aod::pidTOFFullKa, aod::pidTPCFullKa, aod::pidTOFFullDe, aod::pidTPCFullDe>; // aod::pidTPCPr
   /// Construct a registry object with direct declaration
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject};
 
@@ -59,10 +59,8 @@ struct QAHistograms {
   Configurable<float> _PIDtrshld{"PIDtrshld", 10.0, "value of momentum from which the PID is done with TOF (before that only TPC is used)"};
   Configurable<std::vector<float>> _tofNSigma{"tofNSigma", std::vector<float>{-3.0f, 3.0f}, "Nsigma range in TOF"};
 
-
   Configurable<int> _particlePDGtoReject{"particlePDGtoReject", 0, "PDG codes of perticles that will be rejected with TOF (only proton and deurton are supported now)"};
   Configurable<std::vector<float>> _rejectWithinNsigmaTOF{"rejectWithinNsigmaTOF", std::vector<float>{-0.0f, 0.0f}, "TOF rejection Nsigma range for particles specified with PDG to be rejected"};
-
 
   std::pair<int, std::vector<float>> TPCcuts;
   std::pair<int, std::vector<float>> TOFcuts;
@@ -70,14 +68,13 @@ struct QAHistograms {
   using FilteredCollisions = aod::SingleCollSels;
   using FilteredTracks = aod::SingleTrackSels;
 
-
   Filter signFilter = o2::aod::singletrackselector::sign == _sign;
-  Filter pFilter = o2::aod::singletrackselector::p > _min_P && o2::aod::singletrackselector::p < _max_P;
+  Filter pFilter = o2::aod::singletrackselector::p > _min_P&& o2::aod::singletrackselector::p < _max_P;
   Filter etaFilter = nabs(o2::aod::singletrackselector::eta) < _eta;
   Filter tpcTrkFilter = o2::aod::singletrackselector::tpcNClsFound >= (int16_t)_tpcNClsFound &&
                         o2::aod::singletrackselector::tpcChi2NCl < _tpcChi2NCl &&
-                        o2::aod::singletrackselector::tpcCrossedRowsOverFindableCls > _tpcCrossedRowsOverFindableCls &&
-                        o2::aod::singletrackselector::tpcNClsShared <= (uint8_t)_tpcNClsShared;
+                        o2::aod::singletrackselector::tpcCrossedRowsOverFindableCls > _tpcCrossedRowsOverFindableCls&&
+                                                                                        o2::aod::singletrackselector::tpcNClsShared <= (uint8_t)_tpcNClsShared;
   Filter dcaFilter = nabs(o2::aod::singletrackselector::dcaXY) < _dcaXY && nabs(o2::aod::singletrackselector::dcaZ) < _dcaZ;
   Filter itsNClsFilter = o2::aod::singletrackselector::itsNCls >= (uint8_t)_itsNCls && o2::aod::singletrackselector::itsChi2NCl < _itsChi2NCl;
 
@@ -112,11 +109,11 @@ struct QAHistograms {
 
     registry.add("TPCSignal", "TPC Signal", kTH2F, {{{200, 0., 5.0, "#it{p}_{inner} (GeV/#it{c})"}, {1000, 0., 1000.0, "dE/dx in TPC (arbitrary units)"}}});
     registry.add("TOFSignal", "TOF Signal", kTH2F, {{200, 0., 5.0, "#it{p} (GeV/#it{c})"}, {100, 0., 1.5, "#beta"}});
-    if(_particlePDG == 2212){
+    if (_particlePDG == 2212) {
       registry.add("nsigmaTOFPr", "nsigmaTOFPr", kTH2F, {{100, 0., 5.}, {100, -10., 10.}});
       registry.add("nsigmaTPCPr", "nsigmaTPCPr", kTH2F, {{100, 0., 5.}, {100, -10., 10.}});
     }
-    if(_particlePDG == 1000010020){
+    if (_particlePDG == 1000010020) {
       registry.add("nsigmaTOFDe", "nsigmaTOFDe", kTH2F, {{100, 0., 5.}, {100, -10., 10.}});
       registry.add("nsigmaTPCDe", "nsigmaTPCDe", kTH2F, {{100, 0., 5.}, {100, -10., 10.}});
     }
@@ -133,13 +130,14 @@ struct QAHistograms {
       registry.fill(HIST("mult"), collision.mult());
     }
 
-    for (auto& track : tracks ) {
-      if(abs(track.singleCollSel().posZ()) > _vertexZ) continue;
+    for (auto& track : tracks) {
+      if (abs(track.singleCollSel().posZ()) > _vertexZ)
+        continue;
 
       registry.fill(HIST("TPCSignal_nocuts"), track.tpcInnerParam(), track.tpcSignal());
       registry.fill(HIST("TOFSignal_nocuts"), track.p(), track.beta());
 
-      if( !TOFselection(track, std::make_pair(_particlePDGtoReject, _rejectWithinNsigmaTOF)) && (track.p() < _PIDtrshld ? o2::aod::singletrackselector::TPCselection(track, TPCcuts) : o2::aod::singletrackselector::TOFselection(track, TOFcuts)) ){
+      if (!TOFselection(track, std::make_pair(_particlePDGtoReject, _rejectWithinNsigmaTOF)) && (track.p() < _PIDtrshld ? o2::aod::singletrackselector::TPCselection(track, TPCcuts) : o2::aod::singletrackselector::TOFselection(track, TOFcuts))) {
         registry.fill(HIST("eta"), track.eta());
         registry.fill(HIST("phi"), track.phi());
         registry.fill(HIST("px"), track.px());
@@ -160,11 +158,11 @@ struct QAHistograms {
         registry.fill(HIST("TPCchi2"), track.tpcChi2NCl());
         registry.fill(HIST("TPCSignal"), track.tpcInnerParam(), track.tpcSignal());
         registry.fill(HIST("TOFSignal"), track.p(), track.beta());
-        if(_particlePDG == 2212){
+        if (_particlePDG == 2212) {
           registry.fill(HIST("nsigmaTOFPr"), track.p(), track.tofNSigmaPr());
           registry.fill(HIST("nsigmaTPCPr"), track.p(), track.tpcNSigmaPr());
         }
-        if(_particlePDG == 1000010020){
+        if (_particlePDG == 1000010020) {
           registry.fill(HIST("nsigmaTOFDe"), track.p(), track.tofNSigmaDe());
           registry.fill(HIST("nsigmaTPCDe"), track.p(), track.tpcNSigmaDe());
         }

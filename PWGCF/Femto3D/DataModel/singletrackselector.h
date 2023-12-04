@@ -28,8 +28,10 @@ namespace o2::aod
 {
 namespace singletrackselector
 {
-template <typename binningType> inline
-typename binningType::binned_t packInTable(const float& valueToBin)
+template <typename binningType>
+inline
+  typename binningType::binned_t
+  packInTable(const float& valueToBin)
 {
   if (valueToBin <= binningType::binned_min) {
     return binningType::underflowBin;
@@ -41,8 +43,8 @@ typename binningType::binned_t packInTable(const float& valueToBin)
   }
 }
 
-template <typename binningType> inline
-float unPack(const typename binningType::binned_t& b)
+template <typename binningType>
+inline float unPack(const typename binningType::binned_t& b)
 {
   return static_cast<float>(binningType::bin_width * b);
 
@@ -182,7 +184,7 @@ inline o2::framework::expressions::Node PIDselection(PIDcuts const& PIDcuts)
     return o2::aod::singletrackselector::sign == (PIDcuts.signedPDG > 0 ? 1 : -1) && ((o2::aod::singletrackselector::p < PIDcuts.PIDtrshld &&
                                                                                        (o2::aod::singletrackselector::packInTable<singletrackselector::nsigma::binning>(PIDcuts.TPClowLimit) < o2::aod::singletrackselector::storedTpcNSigmaPr &&
                                                                                         o2::aod::singletrackselector::packInTable<singletrackselector::nsigma::binning>(PIDcuts.TPCupLimit) > o2::aod::singletrackselector::storedTpcNSigmaPr)) ||
-                                                                                       (o2::aod::singletrackselector::p >= PIDcuts.PIDtrshld &&
+                                                                                      (o2::aod::singletrackselector::p >= PIDcuts.PIDtrshld &&
                                                                                        //(o2::aod::singletrackselector::packInTable<singletrackselector::nsigma::binning>(PIDcuts.TPCalwaysCut) > nabs(o2::aod::singletrackselector::storedTpcNSigmaPr) &&
                                                                                        (o2::aod::singletrackselector::packInTable<singletrackselector::nsigma::binning>(PIDcuts.TOFlowLimit) < o2::aod::singletrackselector::storedTofNSigmaPr &&
                                                                                         o2::aod::singletrackselector::packInTable<singletrackselector::nsigma::binning>(PIDcuts.TOFupLimit) > o2::aod::singletrackselector::storedTofNSigmaPr)));

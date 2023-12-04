@@ -91,7 +91,7 @@ struct FemtoCorrelationsO2 {
 
   typedef soa::Filtered<FilteredTracks>::iterator* trkType;
   std::unique_ptr<o2::aod::singletrackselector::FemtoPair<trkType>> Pair = std::make_unique<o2::aod::singletrackselector::FemtoPair<trkType>>();
-  //o2::aod::singletrackselector::FemtoPair<trkType>* Pair = new o2::aod::singletrackselector::FemtoPair<trkType>();
+  // o2::aod::singletrackselector::FemtoPair<trkType>* Pair = new o2::aod::singletrackselector::FemtoPair<trkType>();
 
   Filter pFilter = o2::aod::singletrackselector::p > _min_P&& o2::aod::singletrackselector::p < _max_P;
   Filter etaFilter = nabs(o2::aod::singletrackselector::eta) < _eta;
@@ -108,14 +108,14 @@ struct FemtoCorrelationsO2 {
 
   void init(o2::framework::InitContext&)
   {
-    PIDsel_1.signedPDG = _particlePDG_1*_sign_1;
+    PIDsel_1.signedPDG = _particlePDG_1 * _sign_1;
     PIDsel_1.PIDtrshld = _PIDtrshld_1;
     PIDsel_1.TPClowLimit = _tpcNSigma_1.value[0] - o2::aod::singletrackselector::nsigma::binning::bin_width;
     PIDsel_1.TPCupLimit = _tpcNSigma_1.value[1] + o2::aod::singletrackselector::nsigma::binning::bin_width;
     PIDsel_1.TOFlowLimit = _tofNSigma_1.value[0] - o2::aod::singletrackselector::nsigma::binning::bin_width;
     PIDsel_1.TOFupLimit = _tofNSigma_1.value[1] + o2::aod::singletrackselector::nsigma::binning::bin_width;
 
-    PIDsel_2.signedPDG = _particlePDG_2*_sign_2;
+    PIDsel_2.signedPDG = _particlePDG_2 * _sign_2;
     PIDsel_2.PIDtrshld = _PIDtrshld_2;
     PIDsel_2.TPClowLimit = _tpcNSigma_2.value[0] - o2::aod::singletrackselector::nsigma::binning::bin_width;
     PIDsel_2.TPCupLimit = _tpcNSigma_2.value[1] + o2::aod::singletrackselector::nsigma::binning::bin_width;
@@ -123,7 +123,7 @@ struct FemtoCorrelationsO2 {
     PIDsel_2.TOFupLimit = _tofNSigma_2.value[1] - o2::aod::singletrackselector::nsigma::binning::bin_width;
 
     IsIdentical = (_sign_1 * _particlePDG_1 == _sign_2 * _particlePDG_2);
-    
+
     Pair->SetIdentical(IsIdentical);
     Pair->SetPDG1(_particlePDG_1);
     Pair->SetPDG2(_particlePDG_2);
@@ -146,21 +146,23 @@ struct FemtoCorrelationsO2 {
   ConfigurableAxis zBins{"binningVertex", {VARIABLE_WIDTH, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10}, "vertex binning for mixing"};
   ConfigurableAxis MultBins{"binningMultiplicity", {VARIABLE_WIDTH, 0, 50, 100, 200, 300, 400, 500, 550, 600.1}, "multiplicity / centrality binning for mixing"};
   using BinningType = ColumnBinningPolicy<o2::aod::singletrackselector::PosZ, o2::aod::singletrackselector::Mult>;
-  BinningType VertexMultBinning{{zBins, MultBins}, true};                                    // true is for 'ignore overflows' (true by default)
+  BinningType VertexMultBinning{{zBins, MultBins}, true}; // true is for 'ignore overflows' (true by default)
 
   //==================================================================================================================================
 
-  template<typename ColType, typename TrackType> void fillSE(ColType const& collisions, TrackType & tracks)
+  template <typename ColType, typename TrackType>
+  void fillSE(ColType const& collisions, TrackType& tracks)
   {
-    if(!IsIdentical) LOGF(fatal, "Wrong 'fillSE' function has been called -- for non-identical use 2 sets of tracks instead of 1!!!");
+    if (!IsIdentical)
+      LOGF(fatal, "Wrong 'fillSE' function has been called -- for non-identical use 2 sets of tracks instead of 1!!!");
 
     for (auto& collision : collisions) {
       auto SEtracks = tracks->sliceByCached(o2::aod::singletrackselector::singleCollSelId, collision.index(), cacheTrk);
-      
+
       Pair->SetMagField1(collision.magField());
       Pair->SetMagField2(collision.magField());
 
-      for (auto& track : SEtracks){
+      for (auto& track : SEtracks) {
         registry.fill(HIST("p_first"), track.p());
         registry.fill(HIST("nsigmaTOF_first"), track.p(), track.tofNSigmaPr());
         registry.fill(HIST("nsigmaTPC_first"), track.p(), track.tpcNSigmaPr());
@@ -169,16 +171,19 @@ struct FemtoCorrelationsO2 {
       // Example of using tracks from mixed events -- iterate over all track pairs from the two collisions
       for (auto& [trk1, trk2] : combinations(CombinationsStrictlyUpperIndexPolicy(SEtracks, SEtracks))) {
         Pair->SetPair(&trk1, &trk2);
-        
-        if(!Pair->IsClosePair(_deta, _dphi, _radiusTPC)) registry.fill(HIST("SE"), Pair->GetKstar());  // close pair rejection and fillig the SE histo
+
+        if (!Pair->IsClosePair(_deta, _dphi, _radiusTPC))
+          registry.fill(HIST("SE"), Pair->GetKstar()); // close pair rejection and fillig the SE histo
         Pair->ResetPair();
       }
     }
   }
-  
-  template<typename ColType, typename TrackType> void fillSE(ColType const& collisions, TrackType & tracks1, TrackType & tracks2)
+
+  template <typename ColType, typename TrackType>
+  void fillSE(ColType const& collisions, TrackType& tracks1, TrackType& tracks2)
   {
-    if(IsIdentical) LOGF(fatal, "Wrong 'fillSE' function has been called -- for identical use 1 set of tracks instead of 2!!!");
+    if (IsIdentical)
+      LOGF(fatal, "Wrong 'fillSE' function has been called -- for identical use 1 set of tracks instead of 2!!!");
 
     for (auto& collision : collisions) {
       auto SEtracks1 = tracks1->sliceByCached(o2::aod::singletrackselector::singleCollSelId, collision.index(), cacheTrk);
@@ -187,12 +192,12 @@ struct FemtoCorrelationsO2 {
       Pair->SetMagField1(collision.magField());
       Pair->SetMagField2(collision.magField());
 
-      for (auto& track : SEtracks1){
+      for (auto& track : SEtracks1) {
         registry.fill(HIST("p_first"), track.p());
         registry.fill(HIST("nsigmaTOF_first"), track.p(), track.tofNSigmaPr());
         registry.fill(HIST("nsigmaTPC_first"), track.p(), track.tpcNSigmaPr());
       }
-      for (auto& track : SEtracks2){
+      for (auto& track : SEtracks2) {
         registry.fill(HIST("p_second"), track.p());
         registry.fill(HIST("nsigmaTOF_second"), track.p(), track.tofNSigmaPr());
         registry.fill(HIST("nsigmaTPC_second"), track.p(), track.tpcNSigmaPr());
@@ -202,16 +207,18 @@ struct FemtoCorrelationsO2 {
       for (auto& [trk1, trk2] : combinations(CombinationsFullIndexPolicy(SEtracks1, SEtracks2))) {
         Pair->SetPair(&trk1, &trk2);
 
-        if(!Pair->IsClosePair(_deta, _dphi, _radiusTPC)) registry.fill(HIST("SE"), Pair->GetKstar());  // close pair rejection and fillig the SE histo
+        if (!Pair->IsClosePair(_deta, _dphi, _radiusTPC))
+          registry.fill(HIST("SE"), Pair->GetKstar()); // close pair rejection and fillig the SE histo
         Pair->ResetPair();
       }
     }
   }
-  
 
-  template<typename ColType, typename TrackType> void fillME(ColType const& collisions, TrackType & tracks)
+  template <typename ColType, typename TrackType>
+  void fillME(ColType const& collisions, TrackType& tracks)
   {
-    if(!IsIdentical) LOGF(fatal, "Wrong 'fillME' function has been called -- for non-identical use 2 sets of tracks instead of 1!!!");
+    if (!IsIdentical)
+      LOGF(fatal, "Wrong 'fillME' function has been called -- for non-identical use 2 sets of tracks instead of 1!!!");
 
     for (auto& [col1, col2] : selfPairCombinations(VertexMultBinning, 5, -1, collisions)) {
 
@@ -224,15 +231,18 @@ struct FemtoCorrelationsO2 {
       for (auto& [trk1, trk2] : combinations(CombinationsFullIndexPolicy(tracksCol1, tracksCol2))) {
         Pair->SetPair(&trk1, &trk2);
 
-        if(!Pair->IsClosePair(_deta, _dphi, _radiusTPC)) registry.fill(HIST("ME"), Pair->GetKstar());  // close pair rejection and fillig the SE histo
+        if (!Pair->IsClosePair(_deta, _dphi, _radiusTPC))
+          registry.fill(HIST("ME"), Pair->GetKstar()); // close pair rejection and fillig the SE histo
         Pair->ResetPair();
       }
     }
   }
 
-  template<typename ColType, typename TrackType> void fillME(ColType const& collisions, TrackType & tracks1, TrackType & tracks2)
+  template <typename ColType, typename TrackType>
+  void fillME(ColType const& collisions, TrackType& tracks1, TrackType& tracks2)
   {
-    if(IsIdentical) LOGF(fatal, "Wrong 'fillME' function has been called -- for identical use 1 set of tracks instead of 2!!!");
+    if (IsIdentical)
+      LOGF(fatal, "Wrong 'fillME' function has been called -- for identical use 1 set of tracks instead of 2!!!");
 
     for (auto& [col1, col2] : selfPairCombinations(VertexMultBinning, 5, -1, collisions)) {
 
@@ -245,30 +255,32 @@ struct FemtoCorrelationsO2 {
       for (auto& [trk1, trk2] : combinations(CombinationsFullIndexPolicy(tracksCol1, tracksCol2))) {
         Pair->SetPair(&trk1, &trk2);
 
-        if(!Pair->IsClosePair(_deta, _dphi, _radiusTPC)) registry.fill(HIST("ME"), Pair->GetKstar());  // close pair rejection and fillig the SE histo
+        if (!Pair->IsClosePair(_deta, _dphi, _radiusTPC))
+          registry.fill(HIST("ME"), Pair->GetKstar()); // close pair rejection and fillig the SE histo
         Pair->ResetPair();
       }
     }
   }
 
-  
   void process(soa::Filtered<FilteredCollisions> const& collisions, soa::Filtered<FilteredTracks> const& tracks)
   {
-    if (_particlePDG_1 == 0 || _particlePDG_2 == 0) LOGF(fatal, "One of passed PDG is 0!!!");
+    if (_particlePDG_1 == 0 || _particlePDG_2 == 0)
+      LOGF(fatal, "One of passed PDG is 0!!!");
 
     Partition<soa::Filtered<FilteredTracks>> groupedTracks1 = o2::aod::singletrackselector::PIDselection(PIDsel_1);
     groupedTracks1.bindTable(tracks);
 
-    if(IsIdentical){
+    if (IsIdentical) {
       fillSE(collisions, groupedTracks1);
-      if(_doME) fillME(collisions, groupedTracks1);
-    }
-    else{
+      if (_doME)
+        fillME(collisions, groupedTracks1);
+    } else {
       Partition<soa::Filtered<FilteredTracks>> groupedTracks2 = o2::aod::singletrackselector::PIDselection(PIDsel_2);
       groupedTracks2.bindTable(tracks);
 
       fillSE(collisions, groupedTracks1, groupedTracks2);
-      if(_doME) fillME(collisions, groupedTracks1, groupedTracks2);
+      if (_doME)
+        fillME(collisions, groupedTracks1, groupedTracks2);
     }
   }
 };
