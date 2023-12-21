@@ -40,9 +40,8 @@ using namespace o2::aod;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 
-
 struct FemtoCorrelationsMC {
-  //using allinfo = soa::Join<aod::Tracks, aod::TracksExtra, aod::TrackSelection, aod::pidTPCFullPr, aod::TOFSignal, aod::TracksDCA, aod::pidTOFFullPr, aod::pidTOFbeta, aod::pidTOFFullKa, aod::pidTPCFullKa, aod::pidTOFFullDe, aod::pidTPCFullDe>; // aod::pidTPCPr
+  // using allinfo = soa::Join<aod::Tracks, aod::TracksExtra, aod::TrackSelection, aod::pidTPCFullPr, aod::TOFSignal, aod::TracksDCA, aod::pidTOFFullPr, aod::pidTOFbeta, aod::pidTOFFullKa, aod::pidTPCFullKa, aod::pidTOFFullDe, aod::pidTPCFullDe>; // aod::pidTPCPr
   /// Construct a registry object with direct declaration
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject};
 
@@ -75,9 +74,8 @@ struct FemtoCorrelationsMC {
   Configurable<std::vector<float>> _rejectWithinNsigmaTOF{"rejectWithinNsigmaTOF", std::vector<float>{-0.0f, 0.0f}, "TOF rejection Nsigma range for the particle specified with PDG to be rejected"};
 
   Configurable<float> _radiusTPC{"radiusTPC", 1.2, "TPC radius to calculate phi_star for"};
-  
-  ConfigurableAxis CFkStarBinning{"CFkStarBinning", {500, 0.005, 5.005}, "k* binning of the res. matrix (Nbins, lowlimit, uplimit)"};
 
+  ConfigurableAxis CFkStarBinning{"CFkStarBinning", {500, 0.005, 5.005}, "k* binning of the res. matrix (Nbins, lowlimit, uplimit)"};
 
   bool IsIdentical;
 
@@ -98,23 +96,21 @@ struct FemtoCorrelationsMC {
 
   std::unique_ptr<o2::aod::singletrackselector::FemtoPair<trkType>> Pair = std::make_unique<o2::aod::singletrackselector::FemtoPair<trkType>>();
 
-  Filter pFilter = o2::aod::singletrackselector::p > _min_P && o2::aod::singletrackselector::p < _max_P;
+  Filter pFilter = o2::aod::singletrackselector::p > _min_P&& o2::aod::singletrackselector::p < _max_P;
   Filter etaFilter = nabs(o2::aod::singletrackselector::eta) < _eta;
-  
+
   Filter tpcTrkFilter = o2::aod::singletrackselector::tpcNClsFound >= _tpcNClsFound &&
                         o2::aod::singletrackselector::unPack<singletrackselector::binning::chi2>(o2::aod::singletrackselector::storedTpcChi2NCl) < _tpcChi2NCl &&
                         o2::aod::singletrackselector::unPack<singletrackselector::binning::rowsOverFindable>(o2::aod::singletrackselector::storedTpcCrossedRowsOverFindableCls) > _tpcCrossedRowsOverFindableCls;
 
-  
   Filter itsTrkFilter = o2::aod::singletrackselector::unPack<singletrackselector::binning::chi2>(o2::aod::singletrackselector::storedItsChi2NCl) < _itsChi2NCl;
 
   Filter vertexFilter = nabs(o2::aod::singletrackselector::posZ) < _vertexZ;
 
-
   void init(o2::framework::InitContext&)
   {
 
-    IsIdentical = (_sign_1*_particlePDG_1 == _sign_2*_particlePDG_2);
+    IsIdentical = (_sign_1 * _particlePDG_1 == _sign_2 * _particlePDG_2);
 
     Pair->SetIdentical(IsIdentical);
     Pair->SetPDG1(_particlePDG_1);
@@ -144,7 +140,7 @@ struct FemtoCorrelationsMC {
     registry.add("FirstParticle/PtSpectraDe", "PtSpectraDe", kTH1F, {{100, 0., 5.}});
     registry.add("FirstParticle/PtSpectraAll", "PtSpectrAll", kTH1F, {{100, 0., 5.}});
 
-    if(!IsIdentical){
+    if (!IsIdentical) {
       registry.add("SecondParticle/dcaxyz_vs_pt_primary", "dcaxyz_vs_pt_primary", kTH3F, {{100, 0., 5., "pt"}, {200, -1., 1., "DCA_XY(pt) primary"}, {200, -1., 1., "DCA_Z(pt) primary"}});
       registry.add("SecondParticle/dcaxyz_vs_pt_weakdecay", "dcaxyz_vs_pt_weakdecay", kTH3F, {{100, 0., 5., "pt"}, {200, -1., 1., "DCA_XY(pt) weakdecay"}, {200, -1., 1., "DCA_Z(pt) weakdecay"}});
       registry.add("SecondParticle/dcaxyz_vs_pt_material", "dcaxyz_vs_pt_material", kTH3F, {{100, 0., 5., "pt"}, {200, -1., 1., "DCA_XY(pt) material"}, {200, -1., 1., "DCA_Z(pt) material"}});
@@ -169,23 +165,27 @@ struct FemtoCorrelationsMC {
     registry.add("DoubleTrackEffects", "DoubleTrackEffects_deta(dphi*)", kTH2F, {{200, -M_PI, M_PI, "dphi*"}, {200, -0.5, 0.5, "deta"}});
   }
 
-  template<typename Type> void fillEtaPhi(Type const& tracks){ // template for particles from the same collision identical
-    for(int ii=0; ii<tracks.size(); ii++){ // nested loop for all the combinations
-      for(int iii=ii+1; iii<tracks.size(); iii++){
+  template <typename Type>
+  void fillEtaPhi(Type const& tracks)
+  {                                              // template for particles from the same collision identical
+    for (int ii = 0; ii < tracks.size(); ii++) { // nested loop for all the combinations
+      for (int iii = ii + 1; iii < tracks.size(); iii++) {
 
         Pair->SetPair(tracks[ii], tracks[iii]);
         Pair->SetMagField1((tracks[ii]->singleCollSel()).magField());
         Pair->SetMagField2((tracks[iii]->singleCollSel()).magField());
-        
+
         registry.fill(HIST("DoubleTrackEffects"), Pair->GetPhiStarDiff(_radiusTPC), Pair->GetEtaDiff());
         Pair->ResetPair();
       }
     }
   }
 
-  template<typename Type> void fillEtaPhi(Type const& tracks1, Type const& tracks2){ // template for particles from the same collision non-identical
-    for(auto ii : tracks1){
-      for(auto iii : tracks2){
+  template <typename Type>
+  void fillEtaPhi(Type const& tracks1, Type const& tracks2)
+  { // template for particles from the same collision non-identical
+    for (auto ii : tracks1) {
+      for (auto iii : tracks2) {
 
         Pair->SetPair(ii, iii);
         Pair->SetMagField1((ii->singleCollSel()).magField());
@@ -197,9 +197,11 @@ struct FemtoCorrelationsMC {
     }
   }
 
-  template<typename Type> void fillResMatrix(Type const& tracks1, Type const& tracks2){ // template for ME
-    for(auto ii : tracks1){
-      for(auto iii : tracks2){
+  template <typename Type>
+  void fillResMatrix(Type const& tracks1, Type const& tracks2)
+  { // template for ME
+    for (auto ii : tracks1) {
+      for (auto iii : tracks2) {
         Pair->SetPair(ii, iii);
 
         TLorentzVector first4momentumGen;
@@ -213,20 +215,22 @@ struct FemtoCorrelationsMC {
     }
   }
 
-
   void process(soa::Filtered<FilteredCollisions> const& collisions, soa::Filtered<FilteredTracks> const& tracks)
   {
-    if(_particlePDG_1 == 0 || _particlePDG_2 == 0) LOGF(fatal, "One of passed PDG is 0!!!");
+    if (_particlePDG_1 == 0 || _particlePDG_2 == 0)
+      LOGF(fatal, "One of passed PDG is 0!!!");
 
     int trackPDG, trackOrigin;
 
     for (auto track : tracks) {
-      if(abs(track.singleCollSel().posZ()) > _vertexZ) continue;
-      if(track.tpcNClsShared() > _tpcNClsShared || track.itsNCls() < _itsNCls) continue;
+      if (abs(track.singleCollSel().posZ()) > _vertexZ)
+        continue;
+      if (track.tpcNClsShared() > _tpcNClsShared || track.itsNCls() < _itsNCls)
+        continue;
 
-      if(track.sign() == _sign_1 && (track.p() < _PIDtrshld_1 ? o2::aod::singletrackselector::TPCselection(track, TPCcuts_1) : o2::aod::singletrackselector::TOFselection(track, TOFcuts_1)) ){
+      if (track.sign() == _sign_1 && (track.p() < _PIDtrshld_1 ? o2::aod::singletrackselector::TPCselection(track, TPCcuts_1) : o2::aod::singletrackselector::TOFselection(track, TOFcuts_1))) {
         trackOrigin = track.origin();
-        switch(trackOrigin){
+        switch (trackOrigin) {
           case 0:
             registry.fill(HIST("FirstParticle/dcaxyz_vs_pt_primary"), track.pt(), track.dcaXY(), track.dcaZ());
             break;
@@ -237,17 +241,17 @@ struct FemtoCorrelationsMC {
             registry.fill(HIST("FirstParticle/dcaxyz_vs_pt_material"), track.pt(), track.dcaXY(), track.dcaZ());
             break;
         }
-        if(abs(track.dcaXY()) > _dcaXY || abs(track.dcaZ()) > _dcaZ) continue;
-        
-        
-        selectedtracks_1[track.singleCollSelId()].push_back(std::make_shared<decltype(track)>(track));  // filling the map: eventID <-> selected particles1
+        if (abs(track.dcaXY()) > _dcaXY || abs(track.dcaZ()) > _dcaZ)
+          continue;
+
+        selectedtracks_1[track.singleCollSelId()].push_back(std::make_shared<decltype(track)>(track)); // filling the map: eventID <-> selected particles1
 
         trackPDG = abs(track.pdgCode());
 
         registry.fill(HIST("FirstParticle/3dmomentumAll"), track.px_MC(), track.py_MC(), track.pz_MC());
         registry.fill(HIST("FirstParticle/PtSpectraAll"), track.pt_MC());
 
-        switch(trackPDG){
+        switch (trackPDG) {
           case 11:
             registry.fill(HIST("FirstParticle/3dmomentumEl"), track.px_MC(), track.py_MC(), track.pz_MC());
             registry.fill(HIST("FirstParticle/PtSpectraEl"), track.pt_MC());
@@ -275,10 +279,11 @@ struct FemtoCorrelationsMC {
         }
       }
 
-      if(IsIdentical) continue;
-      else if(track.sign() != _sign_2 && !TOFselection(track, std::make_pair(_particlePDGtoReject, _rejectWithinNsigmaTOF)) && (track.p() < _PIDtrshld_2 ? o2::aod::singletrackselector::TPCselection(track, TPCcuts_2) : o2::aod::singletrackselector::TOFselection(track, TOFcuts_2)) ){ // filling the map: eventID <-> selected particles2 if (see condition above ^)
+      if (IsIdentical)
+        continue;
+      else if (track.sign() != _sign_2 && !TOFselection(track, std::make_pair(_particlePDGtoReject, _rejectWithinNsigmaTOF)) && (track.p() < _PIDtrshld_2 ? o2::aod::singletrackselector::TPCselection(track, TPCcuts_2) : o2::aod::singletrackselector::TOFselection(track, TOFcuts_2))) { // filling the map: eventID <-> selected particles2 if (see condition above ^)
         trackOrigin = track.origin();
-        switch(trackOrigin){
+        switch (trackOrigin) {
           case 0:
             registry.fill(HIST("SecondParticle/dcaxyz_vs_pt_primary"), track.pt(), track.dcaXY(), track.dcaZ());
             break;
@@ -289,17 +294,17 @@ struct FemtoCorrelationsMC {
             registry.fill(HIST("SecondParticle/dcaxyz_vs_pt_material"), track.pt(), track.dcaXY(), track.dcaZ());
             break;
         }
-        if(abs(track.dcaXY()) > _dcaXY || abs(track.dcaZ()) > _dcaZ) continue;
-        
-        
-        selectedtracks_2[track.singleCollSelId()].push_back(std::make_shared<decltype(track)>(track));  // filling the map: eventID <-> selected particles2
+        if (abs(track.dcaXY()) > _dcaXY || abs(track.dcaZ()) > _dcaZ)
+          continue;
+
+        selectedtracks_2[track.singleCollSelId()].push_back(std::make_shared<decltype(track)>(track)); // filling the map: eventID <-> selected particles2
 
         trackPDG = abs(track.pdgCode());
 
         registry.fill(HIST("SecondParticle/3dmomentumAll"), track.px_MC(), track.py_MC(), track.pz_MC());
         registry.fill(HIST("SecondParticle/PtSpectraAll"), track.pt_MC());
 
-        switch(trackPDG){
+        switch (trackPDG) {
           case 11:
             registry.fill(HIST("SecondParticle/3dmomentumEl"), track.px_MC(), track.py_MC(), track.pz_MC());
             registry.fill(HIST("SecondParticle/PtSpectraEl"), track.pt_MC());
@@ -330,36 +335,39 @@ struct FemtoCorrelationsMC {
 
     //====================================== filling deta(dphi*) & res. matrix starts here ======================================
 
-    if(IsIdentical){ //====================================== identical ======================================
+    if (IsIdentical) { //====================================== identical ======================================
 
-      for (auto i = selectedtracks_1.begin(); i != selectedtracks_1.end(); i++){ // iterating over all selected collisions with selected tracks
-        fillEtaPhi(i->second); // filling deta(dphi*) -- SE identical
-        auto j=i;
+      for (auto i = selectedtracks_1.begin(); i != selectedtracks_1.end(); i++) { // iterating over all selected collisions with selected tracks
+        fillEtaPhi(i->second);                                                    // filling deta(dphi*) -- SE identical
+        auto j = i;
 
-        for( ++j; j != selectedtracks_1.end(); j++){ // nested loop to do all the ME identical combinations
-          fillResMatrix(i->second, j->second); // filling res. matrix -- ME identical
+        for (++j; j != selectedtracks_1.end(); j++) { // nested loop to do all the ME identical combinations
+          fillResMatrix(i->second, j->second);        // filling res. matrix -- ME identical
         }
       }
     } //====================================== end of identical ======================================
 
-    else{ //====================================== non-identical ======================================
+    else { //====================================== non-identical ======================================
 
-      for (auto i = selectedtracks_1.begin(); i != selectedtracks_1.end(); i++){ // iterating over all selected collisions with selected tracks1
+      for (auto i = selectedtracks_1.begin(); i != selectedtracks_1.end(); i++) { // iterating over all selected collisions with selected tracks1
         auto ii = selectedtracks_2.find(i->first);
-        if(ii != selectedtracks_2.end()) fillEtaPhi(i->second, ii->second); // checking if there are tracks2 for the choosen collision and filling deta(dphi*) -- SE non-identical
+        if (ii != selectedtracks_2.end())
+          fillEtaPhi(i->second, ii->second); // checking if there are tracks2 for the choosen collision and filling deta(dphi*) -- SE non-identical
 
-        for(auto j = selectedtracks_2.begin(); j != selectedtracks_2.end(); j++){ // nested loop to do all the ME non-identical combinations
-          fillResMatrix(i->second, j->second); // filling res. matrix -- ME non-identical
+        for (auto j = selectedtracks_2.begin(); j != selectedtracks_2.end(); j++) { // nested loop to do all the ME non-identical combinations
+          fillResMatrix(i->second, j->second);                                      // filling res. matrix -- ME non-identical
         }
       }
     } //====================================== end of mixing non-identical ======================================
 
     // clearing up
-    for(auto i = selectedtracks_1.begin(); i != selectedtracks_1.end(); i++) (i->second).clear();
+    for (auto i = selectedtracks_1.begin(); i != selectedtracks_1.end(); i++)
+      (i->second).clear();
     selectedtracks_1.clear();
 
-    if(!IsIdentical){
-      for(auto i = selectedtracks_2.begin(); i != selectedtracks_2.end(); i++) (i->second).clear();
+    if (!IsIdentical) {
+      for (auto i = selectedtracks_2.begin(); i != selectedtracks_2.end(); i++)
+        (i->second).clear();
       selectedtracks_2.clear();
     }
   }

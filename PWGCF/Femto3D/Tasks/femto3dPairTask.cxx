@@ -40,9 +40,8 @@ using namespace o2::aod;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 
-
 struct FemtoCorrelations {
-  //using allinfo = soa::Join<aod::Tracks, aod::TracksExtra, aod::TrackSelection, aod::pidTPCFullPr, aod::TOFSignal, aod::TracksDCA, aod::pidTOFFullPr, aod::pidTOFbeta, aod::pidTOFFullKa, aod::pidTPCFullKa, aod::pidTOFFullDe, aod::pidTPCFullDe>; // aod::pidTPCPr
+  // using allinfo = soa::Join<aod::Tracks, aod::TracksExtra, aod::TrackSelection, aod::pidTPCFullPr, aod::TOFSignal, aod::TracksDCA, aod::pidTOFFullPr, aod::pidTOFbeta, aod::pidTOFFullKa, aod::pidTPCFullKa, aod::pidTOFFullDe, aod::pidTPCFullDe>; // aod::pidTPCPr
   /// Construct a registry object with direct declaration
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject};
 
@@ -84,7 +83,6 @@ struct FemtoCorrelations {
   Configurable<std::vector<float>> _kTbins{"kTbins", std::vector<float>{0.0f, 100.0f}, "pair transverse momentum kT binning"};
   ConfigurableAxis CFkStarBinning{"CFkStarBinning", {500, 0.005, 5.005}, "k* binning of the CF (Nbins, lowlimit, uplimit)"};
 
-
   bool IsIdentical;
 
   std::pair<int, std::vector<float>> TPCcuts_1;
@@ -105,35 +103,36 @@ struct FemtoCorrelations {
 
   std::unique_ptr<o2::aod::singletrackselector::FemtoPair<trkType>> Pair = std::make_unique<o2::aod::singletrackselector::FemtoPair<trkType>>();
 
-  Filter pFilter = o2::aod::singletrackselector::p > _min_P && o2::aod::singletrackselector::p < _max_P;
+  Filter pFilter = o2::aod::singletrackselector::p > _min_P&& o2::aod::singletrackselector::p < _max_P;
   Filter etaFilter = nabs(o2::aod::singletrackselector::eta) < _eta;
-  
+
   Filter tpcTrkFilter = o2::aod::singletrackselector::tpcNClsFound >= _tpcNClsFound &&
                         o2::aod::singletrackselector::unPack<singletrackselector::binning::chi2>(o2::aod::singletrackselector::storedTpcChi2NCl) < _tpcChi2NCl &&
                         o2::aod::singletrackselector::unPack<singletrackselector::binning::rowsOverFindable>(o2::aod::singletrackselector::storedTpcCrossedRowsOverFindableCls) > _tpcCrossedRowsOverFindableCls;
 
   Filter dcaFilter = nabs(o2::aod::singletrackselector::unPack<singletrackselector::binning::dca>(o2::aod::singletrackselector::storedDcaXY)) < _dcaXY &&
                      nabs(o2::aod::singletrackselector::unPack<singletrackselector::binning::dca>(o2::aod::singletrackselector::storedDcaZ)) < _dcaZ;
-  
+
   Filter itsTrkFilter = o2::aod::singletrackselector::unPack<singletrackselector::binning::chi2>(o2::aod::singletrackselector::storedItsChi2NCl) < _itsChi2NCl;
 
   Filter vertexFilter = nabs(o2::aod::singletrackselector::posZ) < _vertexZ;
-
 
   std::vector<std::shared_ptr<TH1>> MultHistos;
   std::vector<std::vector<std::shared_ptr<TH1>>> kThistos;
   std::vector<std::vector<std::shared_ptr<TH1>>> SEhistos;
   std::vector<std::vector<std::shared_ptr<TH1>>> MEhistos;
 
-
   void init(o2::framework::InitContext&)
   {
 
-    if(_centBins.value.size() < 2) LOGF(fatal, "The configured number of multiplicity/centrality bins in the array is less than 2 !!!");
-    if(_kTbins.value.size() < 2) LOGF(fatal, "The configured number of kT bins in the array is less than 2 !!!");
-    if(_vertexNbinsToMix.value < 1) LOGF(fatal, "The configured number of VertexZ bins is less than 1 !!!");
+    if (_centBins.value.size() < 2)
+      LOGF(fatal, "The configured number of multiplicity/centrality bins in the array is less than 2 !!!");
+    if (_kTbins.value.size() < 2)
+      LOGF(fatal, "The configured number of kT bins in the array is less than 2 !!!");
+    if (_vertexNbinsToMix.value < 1)
+      LOGF(fatal, "The configured number of VertexZ bins is less than 1 !!!");
 
-    IsIdentical = (_sign_1*_particlePDG_1 == _sign_2*_particlePDG_2);
+    IsIdentical = (_sign_1 * _particlePDG_1 == _sign_2 * _particlePDG_2);
 
     Pair->SetIdentical(IsIdentical);
     Pair->SetPDG1(_particlePDG_1);
@@ -143,10 +142,10 @@ struct FemtoCorrelations {
     TOFcuts_1 = std::make_pair(_particlePDG_1, _tofNSigma_1);
     TPCcuts_2 = std::make_pair(_particlePDG_2, _tpcNSigma_2);
     TOFcuts_2 = std::make_pair(_particlePDG_2, _tofNSigma_2);
-    
+
     const AxisSpec kStarAxis{CFkStarBinning, "k* (GeV/c)"};
 
-    for(int i=0; i<_centBins.value.size()-1; i++){
+    for (int i = 0; i < _centBins.value.size() - 1; i++) {
       std::vector<std::shared_ptr<TH1>> SEperMult;
       std::vector<std::shared_ptr<TH1>> MEperMult;
       std::vector<std::shared_ptr<TH1>> kTperMult;
@@ -154,7 +153,7 @@ struct FemtoCorrelations {
       auto hMult = registry.add<TH1>(Form("Cent%i/Mult_vs_cent%i", i, i), Form("Mult_vs_cent%i", i), kTH1F, {{5001, -0.5, 5000.5, "Nch"}});
       MultHistos.push_back(std::move(hMult));
 
-      for(int j=0; j < _kTbins.value.size()-1; j++){
+      for (int j = 0; j < _kTbins.value.size() - 1; j++) {
         auto hSE = registry.add<TH1>(Form("Cent%i/SE_cent%i_kT%i", i, i, j), Form("SE_cent%i_kT%i", i, j), kTH1F, {kStarAxis});
         auto hME = registry.add<TH1>(Form("Cent%i/ME_cent%i_kT%i", i, i, j), Form("ME_cent%i_kT%i", i, j), kTH1F, {kStarAxis});
         auto hkT = registry.add<TH1>(Form("Cent%i/kT_cent%i_kT%i", i, i, j), Form("kT_cent%i_kT%i", i, j), kTH1F, {{500, 0., 5., "kT"}});
@@ -162,129 +161,144 @@ struct FemtoCorrelations {
         MEperMult.push_back(std::move(hME));
         kTperMult.push_back(std::move(hkT));
       }
-      
+
       SEhistos.push_back(std::move(SEperMult));
       MEhistos.push_back(std::move(MEperMult));
       kThistos.push_back(std::move(kTperMult));
     }
-    
+
     registry.add("p_first", "p", kTH1F, {{100, 0., 5., "p"}});
     registry.add("nsigmaTOF_first", Form("nsigmaTOF_%i", (int)_particlePDG_1), kTH2F, {{100, 0., 5.}, {100, -10., 10.}});
     registry.add("nsigmaTPC_first", Form("nsigmaTPC_%i", (int)_particlePDG_1), kTH2F, {{100, 0., 5.}, {100, -10., 10.}});
-    if(!IsIdentical){
+    if (!IsIdentical) {
       registry.add("p_second", Form("p_%i", (int)_particlePDG_2), kTH1F, {{100, 0., 5., "p"}});
       registry.add("nsigmaTOF_second", Form("nsigmaTOF_%i", (int)_particlePDG_2), kTH2F, {{100, 0., 5.}, {100, -10., 10.}});
       registry.add("nsigmaTPC_second", Form("nsigmaTPC_%i", (int)_particlePDG_2), kTH2F, {{100, 0., 5.}, {100, -10., 10.}});
     }
   }
 
-  template<typename Type> void mixTracks(Type const& tracks, int multBin){ // template for identical particles from the same collision
-    if(multBin < 0 && multBin > SEhistos.size()) LOGF(fatal, "multBin value passed to the mixTracks function is less than 0 or exceeds the configured number of Cent. bins");
+  template <typename Type>
+  void mixTracks(Type const& tracks, int multBin)
+  { // template for identical particles from the same collision
+    if (multBin < 0 && multBin > SEhistos.size())
+      LOGF(fatal, "multBin value passed to the mixTracks function is less than 0 or exceeds the configured number of Cent. bins");
 
-    for(int ii=0; ii<tracks.size(); ii++){ // nested loop for all the combinations
-      for(int iii=ii+1; iii<tracks.size(); iii++){
+    for (int ii = 0; ii < tracks.size(); ii++) { // nested loop for all the combinations
+      for (int iii = ii + 1; iii < tracks.size(); iii++) {
 
         Pair->SetPair(tracks[ii], tracks[iii]);
         float pair_kT = Pair->GetKt();
         int kTbin = o2::aod::singletrackselector::getBinIndex<int>(pair_kT, _kTbins);
-        if(kTbin < 0 && kTbin > SEhistos[multBin].size()) LOGF(fatal, "kTbin value obtained for a pair is less than 0 or exceeds the configured number of kT bins");
+        if (kTbin < 0 && kTbin > SEhistos[multBin].size())
+          LOGF(fatal, "kTbin value obtained for a pair is less than 0 or exceeds the configured number of kT bins");
 
-        if(!Pair->IsClosePair(_deta, _dphi, _radiusTPC)){
+        if (!Pair->IsClosePair(_deta, _dphi, _radiusTPC)) {
           kThistos[multBin][kTbin]->Fill(pair_kT);
-          SEhistos[multBin][kTbin]->Fill(Pair->GetKstar());  // close pair rejection and fillig the SE histo
+          SEhistos[multBin][kTbin]->Fill(Pair->GetKstar()); // close pair rejection and fillig the SE histo
         }
         Pair->ResetPair();
       }
     }
   }
 
-  template<int SE_or_ME, typename Type> void mixTracks(Type const& tracks1, Type const& tracks2, int multBin){ // last value: 0 -- SE; 1 -- ME
-  if(multBin < 0 && multBin > SEhistos.size()) LOGF(fatal, "multBin value passed to the mixTracks function is less than 0 or exceeds the configured number of Cent. bins");
-    
-    for(auto ii : tracks1){
-      for(auto iii : tracks2){
+  template <int SE_or_ME, typename Type>
+  void mixTracks(Type const& tracks1, Type const& tracks2, int multBin)
+  { // last value: 0 -- SE; 1 -- ME
+    if (multBin < 0 && multBin > SEhistos.size())
+      LOGF(fatal, "multBin value passed to the mixTracks function is less than 0 or exceeds the configured number of Cent. bins");
+
+    for (auto ii : tracks1) {
+      for (auto iii : tracks2) {
 
         Pair->SetPair(ii, iii);
         float pair_kT = Pair->GetKt();
         int kTbin = o2::aod::singletrackselector::getBinIndex<int>(pair_kT, _kTbins);
-        if(kTbin < 0 && kTbin > SEhistos[multBin].size()) LOGF(fatal, "kTbin value obtained for a pair is less than 0 or exceeds the configured number of kT bins");
+        if (kTbin < 0 && kTbin > SEhistos[multBin].size())
+          LOGF(fatal, "kTbin value obtained for a pair is less than 0 or exceeds the configured number of kT bins");
 
-        if(!Pair->IsClosePair(_deta, _dphi, _radiusTPC)){
-          if(!SE_or_ME){
+        if (!Pair->IsClosePair(_deta, _dphi, _radiusTPC)) {
+          if (!SE_or_ME) {
             SEhistos[multBin][kTbin]->Fill(Pair->GetKstar());
             kThistos[multBin][kTbin]->Fill(pair_kT);
-          }
-          else MEhistos[multBin][kTbin]->Fill(Pair->GetKstar());
+          } else
+            MEhistos[multBin][kTbin]->Fill(Pair->GetKstar());
         }
         Pair->ResetPair();
       }
     }
   }
 
-
   void process(soa::Filtered<FilteredCollisions> const& collisions, soa::Filtered<FilteredTracks> const& tracks)
   {
-    if(_particlePDG_1 == 0 || _particlePDG_2 == 0) LOGF(fatal, "One of passed PDG is 0!!!");
+    if (_particlePDG_1 == 0 || _particlePDG_2 == 0)
+      LOGF(fatal, "One of passed PDG is 0!!!");
 
     for (auto track : tracks) {
-      if(abs(track.singleCollSel().posZ()) > _vertexZ) continue;
-      if(track.tpcNClsShared() > _tpcNClsShared && track.itsNCls() < _itsNCls) continue;
-      if(track.singleCollSel().multPerc() < *_centBins.value.begin() || track.singleCollSel().multPerc() > *(_centBins.value.end()-1)) continue;
+      if (abs(track.singleCollSel().posZ()) > _vertexZ)
+        continue;
+      if (track.tpcNClsShared() > _tpcNClsShared && track.itsNCls() < _itsNCls)
+        continue;
+      if (track.singleCollSel().multPerc() < *_centBins.value.begin() || track.singleCollSel().multPerc() > *(_centBins.value.end() - 1))
+        continue;
 
-      if(track.sign() == _sign_1 && (track.p() < _PIDtrshld_1 ? o2::aod::singletrackselector::TPCselection(track, TPCcuts_1) : o2::aod::singletrackselector::TOFselection(track, TOFcuts_1)) ){ // filling the map: eventID <-> selected particles1
+      if (track.sign() == _sign_1 && (track.p() < _PIDtrshld_1 ? o2::aod::singletrackselector::TPCselection(track, TPCcuts_1) : o2::aod::singletrackselector::TOFselection(track, TOFcuts_1))) { // filling the map: eventID <-> selected particles1
         selectedtracks_1[track.singleCollSelId()].push_back(std::make_shared<decltype(track)>(track));
 
         registry.fill(HIST("p_first"), track.p());
-        if(_particlePDG_1 == 211){
+        if (_particlePDG_1 == 211) {
           registry.fill(HIST("nsigmaTOF_first"), track.p(), track.tofNSigmaPi());
           registry.fill(HIST("nsigmaTPC_first"), track.p(), track.tpcNSigmaPi());
         }
-        if(_particlePDG_1 == 321){
+        if (_particlePDG_1 == 321) {
           registry.fill(HIST("nsigmaTOF_first"), track.p(), track.tofNSigmaKa());
           registry.fill(HIST("nsigmaTPC_first"), track.p(), track.tpcNSigmaKa());
         }
-        if(_particlePDG_1 == 2212){
+        if (_particlePDG_1 == 2212) {
           registry.fill(HIST("nsigmaTOF_first"), track.p(), track.tofNSigmaPr());
           registry.fill(HIST("nsigmaTPC_first"), track.p(), track.tpcNSigmaPr());
         }
-        if(_particlePDG_1 == 1000010020){
+        if (_particlePDG_1 == 1000010020) {
           registry.fill(HIST("nsigmaTOF_first"), track.p(), track.tofNSigmaDe());
           registry.fill(HIST("nsigmaTPC_first"), track.p(), track.tpcNSigmaDe());
         }
       }
 
-      if(IsIdentical) continue;
-      else if(track.sign() != _sign_2 && !TOFselection(track, std::make_pair(_particlePDGtoReject, _rejectWithinNsigmaTOF)) && (track.p() < _PIDtrshld_2 ? o2::aod::singletrackselector::TPCselection(track, TPCcuts_2) : o2::aod::singletrackselector::TOFselection(track, TOFcuts_2)) ){ // filling the map: eventID <-> selected particles2 if (see condition above ^)
+      if (IsIdentical)
+        continue;
+      else if (track.sign() != _sign_2 && !TOFselection(track, std::make_pair(_particlePDGtoReject, _rejectWithinNsigmaTOF)) && (track.p() < _PIDtrshld_2 ? o2::aod::singletrackselector::TPCselection(track, TPCcuts_2) : o2::aod::singletrackselector::TOFselection(track, TOFcuts_2))) { // filling the map: eventID <-> selected particles2 if (see condition above ^)
         selectedtracks_2[track.singleCollSelId()].push_back(std::make_shared<decltype(track)>(track));
 
         registry.fill(HIST("p_second"), track.p());
-        if(_particlePDG_2 == 211){
+        if (_particlePDG_2 == 211) {
           registry.fill(HIST("nsigmaTOF_second"), track.p(), track.tofNSigmaPi());
           registry.fill(HIST("nsigmaTPC_second"), track.p(), track.tpcNSigmaPi());
         }
-        if(_particlePDG_2 == 321){
+        if (_particlePDG_2 == 321) {
           registry.fill(HIST("nsigmaTOF_second"), track.p(), track.tofNSigmaKa());
           registry.fill(HIST("nsigmaTPC_second"), track.p(), track.tpcNSigmaKa());
         }
-        if(_particlePDG_2 == 2212){
+        if (_particlePDG_2 == 2212) {
           registry.fill(HIST("nsigmaTOF_second"), track.p(), track.tofNSigmaPr());
           registry.fill(HIST("nsigmaTPC_second"), track.p(), track.tpcNSigmaPr());
         }
-        if(_particlePDG_2 == 1000010020){
+        if (_particlePDG_2 == 1000010020) {
           registry.fill(HIST("nsigmaTOF_second"), track.p(), track.tofNSigmaDe());
           registry.fill(HIST("nsigmaTPC_second"), track.p(), track.tpcNSigmaDe());
         }
       }
     }
-    
-    for (auto collision : collisions) {
-      if(collision.multPerc() < *_centBins.value.begin() || collision.multPerc() > *(_centBins.value.end()-1)) continue;
 
-      if(selectedtracks_1.find(collision.globalIndex()) == selectedtracks_1.end()){
-        if(IsIdentical) continue;
-        else if(selectedtracks_2.find(collision.globalIndex()) == selectedtracks_2.end()) continue;
+    for (auto collision : collisions) {
+      if (collision.multPerc() < *_centBins.value.begin() || collision.multPerc() > *(_centBins.value.end() - 1))
+        continue;
+
+      if (selectedtracks_1.find(collision.globalIndex()) == selectedtracks_1.end()) {
+        if (IsIdentical)
+          continue;
+        else if (selectedtracks_2.find(collision.globalIndex()) == selectedtracks_2.end())
+          continue;
       }
-      int vertexBinToMix = round(collision.posZ()/(2*_vertexZ/_vertexNbinsToMix));
+      int vertexBinToMix = round(collision.posZ() / (2 * _vertexZ / _vertexNbinsToMix));
       float centBinToMix = o2::aod::singletrackselector::getBinIndex<float>(collision.multPerc(), _centBins, _multNsubBins);
 
       mixbins[std::pair<int, float>{vertexBinToMix, centBinToMix}].push_back(std::make_shared<decltype(collision)>(collision));
@@ -292,11 +306,11 @@ struct FemtoCorrelations {
 
     //====================================== mixing starts here ======================================
 
-    if(IsIdentical){ //====================================== mixing identical ======================================
+    if (IsIdentical) { //====================================== mixing identical ======================================
 
-      for (auto i = mixbins.begin(); i != mixbins.end(); i++){ // iterating over all vertex&mult bins
+      for (auto i = mixbins.begin(); i != mixbins.end(); i++) { // iterating over all vertex&mult bins
 
-        for(int indx1=0; indx1<(i->second).size(); indx1++){ // loop over all the events in each vertex&mult bin
+        for (int indx1 = 0; indx1 < (i->second).size(); indx1++) { // loop over all the events in each vertex&mult bin
 
           auto col1 = (i->second)[indx1];
 
@@ -308,23 +322,23 @@ struct FemtoCorrelations {
 
           mixTracks(selectedtracks_1[col1->index()], centBin); // mixing SE identical
 
-          for(int indx2=indx1+1; indx2<(i->second).size(); indx2++){ // nested loop for all the combinations of collisions in a chosen mult/vertex bin
+          for (int indx2 = indx1 + 1; indx2 < (i->second).size(); indx2++) { // nested loop for all the combinations of collisions in a chosen mult/vertex bin
 
             auto col2 = (i->second)[indx2];
 
             Pair->SetMagField2(col2->magField());
-            mixTracks<1>(selectedtracks_1[col1->index()], selectedtracks_1[col2->index()], centBin); //mixing ME identical, in <> brackets: 0 -- SE; 1 -- ME
+            mixTracks<1>(selectedtracks_1[col1->index()], selectedtracks_1[col2->index()], centBin); // mixing ME identical, in <> brackets: 0 -- SE; 1 -- ME
           }
         }
       }
 
     } //====================================== end of mixing identical ======================================
 
-    else{ //====================================== mixing non-identical ======================================
+    else { //====================================== mixing non-identical ======================================
 
-      for (auto i = mixbins.begin(); i != mixbins.end(); i++){ // iterating over all vertex&mult bins
+      for (auto i = mixbins.begin(); i != mixbins.end(); i++) { // iterating over all vertex&mult bins
 
-        for(int indx1=0; indx1<(i->second).size(); indx1++){ // loop over all the events in each vertex&mult bin
+        for (int indx1 = 0; indx1 < (i->second).size(); indx1++) { // loop over all the events in each vertex&mult bin
 
           auto col1 = (i->second)[indx1];
 
@@ -334,14 +348,14 @@ struct FemtoCorrelations {
           int centBin = std::floor((i->first).second);
           MultHistos[centBin]->Fill(col1->mult());
 
-          mixTracks<0>(selectedtracks_1[col1->index()], selectedtracks_2[col1->index()], centBin); //mixing SE non-identical, in <> brackets: 0 -- SE; 1 -- ME
+          mixTracks<0>(selectedtracks_1[col1->index()], selectedtracks_2[col1->index()], centBin); // mixing SE non-identical, in <> brackets: 0 -- SE; 1 -- ME
 
-          for(int indx2=indx1+1; indx2<(i->second).size(); indx2++){ // nested loop for all the combinations of collisions in a chosen mult/vertex bin
+          for (int indx2 = indx1 + 1; indx2 < (i->second).size(); indx2++) { // nested loop for all the combinations of collisions in a chosen mult/vertex bin
 
             auto col2 = (i->second)[indx2];
 
             Pair->SetMagField2(col2->magField());
-            mixTracks<1>(selectedtracks_1[col1->index()], selectedtracks_2[col2->index()], centBin); //mixing ME non-identical, in <> brackets: 0 -- SE; 1 -- ME
+            mixTracks<1>(selectedtracks_1[col1->index()], selectedtracks_2[col2->index()], centBin); // mixing ME non-identical, in <> brackets: 0 -- SE; 1 -- ME
           }
         }
       }
@@ -349,15 +363,18 @@ struct FemtoCorrelations {
     } //====================================== end of mixing non-identical ======================================
 
     // clearing up
-    for(auto i = selectedtracks_1.begin(); i != selectedtracks_1.end(); i++) (i->second).clear();
+    for (auto i = selectedtracks_1.begin(); i != selectedtracks_1.end(); i++)
+      (i->second).clear();
     selectedtracks_1.clear();
 
-    if(!IsIdentical){
-      for(auto i = selectedtracks_2.begin(); i != selectedtracks_2.end(); i++) (i->second).clear();
+    if (!IsIdentical) {
+      for (auto i = selectedtracks_2.begin(); i != selectedtracks_2.end(); i++)
+        (i->second).clear();
       selectedtracks_2.clear();
     }
 
-    for(auto i = mixbins.begin(); i != mixbins.end(); i++) (i->second).clear();
+    for (auto i = mixbins.begin(); i != mixbins.end(); i++)
+      (i->second).clear();
     mixbins.clear();
   }
 };

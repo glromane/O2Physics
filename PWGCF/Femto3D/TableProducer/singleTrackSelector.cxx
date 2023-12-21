@@ -81,7 +81,7 @@ struct singleTrackSelector {
   Filter vertexFilter = ((o2::aod::collision::posZ < 15.f) && (o2::aod::collision::posZ > -15.f));
   Filter trackFilter = ((o2::aod::track::itsChi2NCl <= 36.f) && (o2::aod::track::itsChi2NCl >= 0.f) && (o2::aod::track::tpcChi2NCl >= 0.f) && (o2::aod::track::tpcChi2NCl <= 4.f));
 
-  Filter pFilter = o2::aod::track::p > _min_P && o2::aod::track::p < _max_P;
+  Filter pFilter = o2::aod::track::p > _min_P&& o2::aod::track::p < _max_P;
   Filter etaFilter = nabs(o2::aod::track::eta) < _eta;
   Filter dcaFilter = (o2::aod::track::dcaXY <= _dcaXY) && (o2::aod::track::dcaZ <= _dcaZ);
 
@@ -132,9 +132,8 @@ struct singleTrackSelector {
     d_bz = 0.1 * d_bz;
   }
 
-
-  template<bool isMC, typename Col, typename Trks> inline
-  void fillTheTables(Col collision, Trks const& tracks)
+  template <bool isMC, typename Col, typename Trks>
+  inline void fillTheTables(Col collision, Trks const& tracks)
   {
     bool skip_track = false; // flag used for track rejection
 
@@ -144,8 +143,9 @@ struct singleTrackSelector {
                  d_bz);
 
     for (auto& track : tracks) {
-      if constexpr (isMC){
-        if(!track.has_mcParticle()) continue;
+      if constexpr (isMC) {
+        if (!track.has_mcParticle())
+          continue;
       }
       skip_track = false;
       if (Configurable<bool>{"rejectNotPropagatedTrks", true, "rejects tracks that are not propagated to the primary vertex"} && track.trackType() != aod::track::Track) {
@@ -192,14 +192,18 @@ struct singleTrackSelector {
                         track.tpcSignal(),
                         track.beta());
 
-          if constexpr (isMC){
+          if constexpr (isMC) {
             int origin = -1;
-            if(track.mcParticle().isPhysicalPrimary()) origin=0;
-            if(!track.mcParticle().isPhysicalPrimary() && track.mcParticle().producedByGenerator()) origin=1;
-            if(!track.mcParticle().isPhysicalPrimary() && !track.mcParticle().producedByGenerator()) origin=2;
+            if (track.mcParticle().isPhysicalPrimary())
+              origin = 0;
+            if (!track.mcParticle().isPhysicalPrimary() && track.mcParticle().producedByGenerator())
+              origin = 1;
+            if (!track.mcParticle().isPhysicalPrimary() && !track.mcParticle().producedByGenerator())
+              origin = 2;
 
-            if (origin == -1) LOGF(fatal, "Could not define the origin (primary/weak decay/material) of the track!!!");
-            
+            if (origin == -1)
+              LOGF(fatal, "Could not define the origin (primary/weak decay/material) of the track!!!");
+
             tableRowMC(track.mcParticle().pdgCode(),
                        origin,
                        track.mcParticle().p(),
@@ -220,11 +224,9 @@ struct singleTrackSelector {
     auto bc = collision.bc_as<aod::BCsWithTimestamps>();
     initCCDB(bc);
 
-
     fillTheTables<false>(collision, tracks);
   }
   PROCESS_SWITCH(singleTrackSelector, processData, "process data", true);
-
 
   void processMC(soa::Filtered<Coll>::iterator const& collision, soa::Filtered<soa::Join<Trks, aod::McTrackLabels>> const& tracks, aod::McParticles const&, aod::BCsWithTimestamps const&)
   {
@@ -234,7 +236,6 @@ struct singleTrackSelector {
 
     auto bc = collision.bc_as<aod::BCsWithTimestamps>();
     initCCDB(bc);
-
 
     fillTheTables<true>(collision, tracks);
   }
