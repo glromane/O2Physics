@@ -162,8 +162,6 @@ struct FemtoCorrelationsMC {
       for (int iii = ii + 1; iii < tracks.size(); iii++) {
 
         Pair->SetPair(tracks[ii], tracks[iii]);
-        Pair->SetMagField1((tracks[ii]->template singleCollSel_as<soa::Filtered<FilteredCollisions>>()).magField());
-        Pair->SetMagField2((tracks[iii]->template singleCollSel_as<soa::Filtered<FilteredCollisions>>()).magField());
 
         registry.fill(HIST("DoubleTrackEffects"), Pair->GetPhiStarDiff(_radiusTPC), Pair->GetEtaDiff());
         Pair->ResetPair();
@@ -178,8 +176,6 @@ struct FemtoCorrelationsMC {
       for (auto iii : tracks2) {
 
         Pair->SetPair(ii, iii);
-        Pair->SetMagField1((ii->template singleCollSel_as<soa::Filtered<FilteredCollisions>>()).magField());
-        Pair->SetMagField2((iii->template singleCollSel_as<soa::Filtered<FilteredCollisions>>()).magField());
 
         registry.fill(HIST("DoubleTrackEffects"), Pair->GetPhiStarDiff(_radiusTPC), Pair->GetEtaDiff());
         Pair->ResetPair();
